@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="ARTASAS - Immersive image gallery experience">
+  <meta name="theme-color" content="#0a0a0f">
+  <title>Midjourney Gallery</title>
+  
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --text-primary: #e0e0e0;
+      --text-secondary: #6b7280;
+      --accent: #3b82f6;
+      --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: #000000;
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      cursor: grab;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    
+    /* Starfield background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: 
+        radial-gradient(1px 1px at 20px 30px, rgba(255,255,255,0.3), transparent),
+        radial-gradient(1px 1px at 40px 70px, rgba(255,255,255,0.2), transparent),
+        radial-gradient(1px 1px at 50px 160px, rgba(255,255,255,0.3), transparent),
+        radial-gradient(1px 1px at 90px 40px, rgba(255,255,255,0.2), transparent),
+        radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,0.3), transparent),
+        radial-gradient(1px 1px at 160px 120px, rgba(255,255,255,0.2), transparent);
+      background-repeat: repeat;
+      background-size: 200px 200px;
+      pointer-events: none;
+      opacity: 0.6;
+    }
+    
+    body:active {
+      cursor: grabbing;
+    }
+    
+    /* Logo */
+    .logo {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      pointer-events: none;
+    }
+    
+    .logo img {
+      height: 17px;
+      width: auto;
+      opacity: 0.7;
+    }
+    
+    /* Canvas Container */
+    #gallery-container {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+    }
+    
+    #gallery-canvas {
+      position: absolute;
+      width: 3000px;
+      height: 2200px;
+      will-change: transform;
+    }
+    
+    /* Gallery Item */
+    .gallery-item {
+      position: absolute;
+      cursor: pointer;
+      border-radius: 4px;
+      overflow: hidden;
+      background: #111;
+      transition: filter 0.2s ease, box-shadow 0.2s ease, opacity 0.3s ease;
+      pointer-events: auto;
+      transform-origin: center center;
+      will-change: transform, opacity;
+    }
+    
+    .gallery-item:hover {
+      filter: brightness(1.3) !important;
+      box-shadow: 0 0 100px rgba(100, 150, 255, 0.5);
+    }
+    
+    .gallery-item img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+      -webkit-user-drag: none;
+    }
+    
+    /* Base depth styling (will be modified by JS) */
+    .gallery-item[data-depth="0"] {
+      filter: brightness(1) saturate(1.1);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    }
+    
+    .gallery-item[data-depth="1"] {
+      filter: brightness(0.8) saturate(0.9);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    }
+    
+    .gallery-item[data-depth="2"] {
+      filter: brightness(0.55) saturate(0.7);
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+    }
+    
+    /* Image Viewer Overlay */
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity var(--transition), visibility var(--transition);
+    }
+    
+    .viewer-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .viewer-backdrop {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to right, transparent 30%, rgba(0, 0, 0, 0.85) 60%);
+    }
+    
+    .viewer-content {
+      position: relative;
+      margin-left: auto;
+      width: 55%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 60px;
+      transform: translateX(100%);
+      transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.4) 20%);
+    }
+    
+    .viewer-overlay.active .viewer-content {
+      transform: translateX(0);
+    }
+    
+    .viewer-image {
+      max-width: 100%;
+      max-height: 80vh;
+      object-fit: contain;
+      border-radius: 6px;
+      box-shadow: 
+        0 25px 100px rgba(0, 0, 0, 0.6),
+        0 0 100px rgba(50, 100, 200, 0.1);
+    }
+    
+    .viewer-label {
+      margin-top: 24px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.4);
+      letter-spacing: 0.1em;
+      text-transform: lowercase;
+    }
+    
+    .viewer-close {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      border-radius: 50%;
+      color: rgba(255, 255, 255, 0.5);
+      cursor: pointer;
+      transition: color var(--transition), background var(--transition);
+    }
+    
+    .viewer-close:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.9);
+    }
+    
+    /* Controls */
+    .controls {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    
+    .controls-help {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.35);
+      letter-spacing: 0.02em;
+    }
+    
+    .controls-help span {
+      margin: 0 8px;
+      color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .grid-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    
+    .grid-toggle:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.15);
+      color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .grid-toggle.active {
+      background: rgba(255, 255, 255, 0.12);
+      color: rgba(255, 255, 255, 0.9);
+    }
+    
+    .grid-icon {
+      display: grid;
+      grid-template-columns: repeat(2, 5px);
+      gap: 2px;
+    }
+    
+    .grid-icon span {
+      width: 5px;
+      height: 5px;
+      background: currentColor;
+      border-radius: 1px;
+      opacity: 0.8;
+    }
+    
+    /* Zoom indicator */
+    .zoom-indicator {
+      position: fixed;
+      bottom: 20px;
+      right: 24px;
+      z-index: 100;
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.3);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.05em;
+    }
+    
+    /* Grid View */
+    .grid-view {
+      position: fixed;
+      inset: 0;
+      z-index: 150;
+      background: #000;
+      padding: 80px 32px 100px;
+      overflow-y: auto;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity var(--transition), visibility var(--transition);
+    }
+    
+    .grid-view.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .grid-close {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 160;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 6px;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      opacity: 0;
+      visibility: hidden;
+    }
+    
+    .grid-view.active ~ .grid-close,
+    .grid-close.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .grid-close:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: rgba(255, 255, 255, 0.9);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+    
+    .grid-close svg {
+      width: 14px;
+      height: 14px;
+    }
+    
+    .grid-view-content {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+      max-width: 1800px;
+      margin: 0 auto;
+    }
+    
+    .grid-view-item {
+      aspect-ratio: 1;
+      border-radius: 4px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform var(--transition), box-shadow var(--transition), filter var(--transition);
+      background: #111;
+    }
+    
+    .grid-view-item:hover {
+      transform: scale(1.03);
+      box-shadow: 0 15px 50px rgba(0, 0, 0, 0.6);
+      filter: brightness(1.1);
+      z-index: 1;
+    }
+    
+    .grid-view-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    /* Loading */
+    .loading {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      transition: opacity 0.6s ease;
+    }
+    
+    .loading.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    .loading-spinner {
+      width: 32px;
+      height: 32px;
+      border: 2px solid rgba(255, 255, 255, 0.06);
+      border-top-color: rgba(255, 255, 255, 0.4);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .viewer-content {
+        width: 100%;
+        padding: 20px;
+      }
+      
+      .controls-help {
+        display: none;
+      }
+      
+      .grid-view {
+        padding: 70px 16px 16px;
+      }
+      
+      .grid-view-content {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 8px;
+      }
+    }
+    
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading -->
+  <div class="loading" id="loading">
+    <div class="loading-spinner"></div>
+  </div>
+  
+  <!-- Logo -->
+  <div class="logo">
+    <img src="logo.png" alt="Logo">
+  </div>
+  
+  <!-- Gallery Canvas -->
+  <div id="gallery-container">
+    <div id="gallery-canvas"></div>
+  </div>
+  
+  <!-- Image Viewer -->
+  <div class="viewer-overlay" id="viewer">
+    <div class="viewer-backdrop" id="viewer-backdrop"></div>
+    <div class="viewer-content">
+      <button class="viewer-close" id="viewer-close" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+      </button>
+      <img class="viewer-image" id="viewer-image" src="" alt="">
+      <div class="viewer-label" id="viewer-label">perplexity</div>
+    </div>
+  </div>
+  
+  <!-- Grid View -->
+  <div class="grid-view" id="grid-view">
+    <div class="grid-view-content" id="grid-content"></div>
+  </div>
+  
+  <!-- Grid Close Button -->
+  <button class="grid-close" id="grid-close">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M18 6L6 18M6 6l12 12"/>
+    </svg>
+    CLOSE
+  </button>
+  
+  <!-- Controls -->
+  <div class="controls">
+    <div class="controls-help">
+      Drag to pan<span>·</span>Scroll to zoom<span>·</span>Click to view
+    </div>
+    <button class="grid-toggle" id="grid-toggle">
+      <div class="grid-icon">
+        <span></span><span></span><span></span><span></span>
+      </div>
+      GRID
+    </button>
+  </div>
+  
+  <!-- Zoom Indicator -->
+  <div class="zoom-indicator" id="zoom-indicator">100%</div>
+  
+  <script>
+    // Image data - using images from the workspace
+    const images = [
+      { src: 'art.jpeg', label: 'art' },
+      { src: 'FJanx6YWYAo8KW9.jpeg', label: 'artasas' },
+      { src: 'G__9DIUbcAAt_cy.jpeg', label: 'artasas' },
+      { src: 'G__MaODbEAQ7Rn3.jpeg', label: 'artasas' },
+      { src: 'G_6ATQ2XoAA95dV.jpeg', label: 'artasas' },
+      { src: 'G_758bdWwAATy_9.jpeg', label: 'artasas' },
+      { src: 'G_Cw8iBW0AAcDiV.jpeg', label: 'artasas' },
+      { src: 'G_NWn8FaIAEO25I.jpeg', label: 'artasas' },
+      { src: 'G_vet9yWcAARLKT.jpeg', label: 'artasas' },
+      { src: 'G046ZVHWkAABcQ1.jpeg', label: 'artasas' },
+      { src: 'G06JwjsWQAAw4Y5.jpeg', label: 'artasas' },
+      { src: 'G2naqcabIAEp8jE.jpeg', label: 'artasas' },
+      { src: 'G36PhxlWcAAxPr5.jpeg', label: 'artasas' },
+      { src: 'G5BFNOzWYAAuMHi.jpeg', label: 'artasas' },
+      { src: 'G8lehBTW8AA6C5u.jpeg', label: 'artasas' },
+      { src: 'G93cWkQXcAAXPcr.jpeg', label: 'artasas' },
+      { src: 'GLnfiyfWQAItm-O.jpeg', label: 'artasas' },
+      { src: 'Gz7G_5rXEAAc7mt.jpeg', label: 'artasas' },
+      { src: 'GzHnXerWoAAp5lI.jpeg', label: 'artasas' },
+      { src: 'HAD4TeTbAAA7suu.jpeg', label: 'artasas' },
+      { src: 'HAE4mByWMAAAzbd.jpeg', label: 'artasas' },
+      { src: 'HAGeCV-XkAAVCu2.jpeg', label: 'artasas' }
+    ];
+    
+    class Gallery {
+      constructor() {
+        this.container = document.getElementById('gallery-container');
+        this.canvas = document.getElementById('gallery-canvas');
+        this.viewer = document.getElementById('viewer');
+        this.viewerImage = document.getElementById('viewer-image');
+        this.viewerLabel = document.getElementById('viewer-label');
+        this.gridView = document.getElementById('grid-view');
+        this.gridContent = document.getElementById('grid-content');
+        this.gridToggle = document.getElementById('grid-toggle');
+        this.zoomIndicator = document.getElementById('zoom-indicator');
+        this.loading = document.getElementById('loading');
+        
+        // Position state
+        this.x = 0;
+        this.y = 0;
+        this.targetX = 0;
+        this.targetY = 0;
+        this.scale = 1;
+        this.targetScale = 1;
+        
+        // Velocity for momentum
+        this.velX = 0;
+        this.velY = 0;
+        
+        // Drag state
+        this.isDragging = false;
+        this.dragStarted = false;
+        this.startX = 0;
+        this.startY = 0;
+        this.lastX = 0;
+        this.lastY = 0;
+        
+        // Settings
+        this.friction = 0.95;
+        this.ease = 0.08;
+        this.minScale = 0.3;
+        this.maxScale = 5.0;
+        
+        this.isGridView = false;
+        this.items = [];
+        
+        // Canvas size (smaller = images closer together)
+        this.canvasWidth = 3000;
+        this.canvasHeight = 2200;
+        
+        this.init();
+      }
+      
+      async init() {
+        await this.loadImages();
+        this.createGalleryItems();
+        this.createGridView();
+        this.centerView();
+        this.setupEvents();
+        this.animate();
+        
+        setTimeout(() => {
+          this.loading.classList.add('hidden');
+        }, 500);
+      }
+      
+      async loadImages() {
+        const promises = images.map(img => {
+          return new Promise((resolve) => {
+            const image = new Image();
+            image.onload = () => resolve({ ...img, width: image.width, height: image.height });
+            image.onerror = () => resolve({ ...img, width: 300, height: 200 });
+            image.src = img.src;
+          });
+        });
+        this.imageData = await Promise.all(promises);
+      }
+      
+      createGalleryItems() {
+        const positions = this.generatePositions();
+        
+        positions.forEach((pos, index) => {
+          const imgData = this.imageData[index];
+          const item = document.createElement('div');
+          item.className = 'gallery-item';
+          
+          const baseSize = pos.depth === 0 ? 300 : pos.depth === 1 ? 200 : 120;
+          const ratio = imgData.width / imgData.height;
+          const w = ratio > 1 ? baseSize : baseSize * ratio;
+          const h = ratio > 1 ? baseSize / ratio : baseSize;
+          
+          item.style.left = `${pos.x}px`;
+          item.style.top = `${pos.y}px`;
+          item.style.width = `${w}px`;
+          item.style.height = `${h}px`;
+          item.dataset.depth = pos.depth;
+          item.dataset.baseX = pos.x;
+          item.dataset.baseY = pos.y;
+          
+          const img = document.createElement('img');
+          img.src = imgData.src;
+          img.alt = imgData.label;
+          img.draggable = false;
+          
+          item.appendChild(img);
+          item.addEventListener('click', () => {
+            if (!this.dragStarted) {
+              this.openViewer(imgData);
+            }
+          });
+          
+          this.canvas.appendChild(item);
+          this.items.push({ el: item, depth: pos.depth, baseX: pos.x, baseY: pos.y });
+        });
+      }
+      
+      generatePositions() {
+        const positions = [];
+        const depths = [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2];
+        const used = [];
+        
+        for (let i = 0; i < images.length; i++) {
+          const depth = depths[i] || 2;
+          const size = depth === 0 ? 280 : depth === 1 ? 180 : 110;
+          let x, y, tries = 0;
+          
+          do {
+            x = 100 + Math.random() * (this.canvasWidth - size - 200);
+            y = 100 + Math.random() * (this.canvasHeight - size - 200);
+            tries++;
+          } while (this.checkOverlap(x, y, size, used) && tries < 100);
+          
+          used.push({ x, y, size: size + 20 });
+          positions.push({ x, y, depth });
+        }
+        return positions;
+      }
+      
+      checkOverlap(x, y, size, areas) {
+        for (const a of areas) {
+          if (Math.abs(x - a.x) < (size + a.size) / 2.2 && 
+              Math.abs(y - a.y) < (size + a.size) / 2.2) {
+            return true;
+          }
+        }
+        return false;
+      }
+      
+      createGridView() {
+        this.imageData.forEach(imgData => {
+          const item = document.createElement('div');
+          item.className = 'grid-view-item';
+          const img = document.createElement('img');
+          img.src = imgData.src;
+          img.alt = imgData.label;
+          item.appendChild(img);
+          item.addEventListener('click', () => this.openViewer(imgData));
+          this.gridContent.appendChild(item);
+        });
+      }
+      
+      centerView() {
+        this.x = -(this.canvasWidth / 2 - window.innerWidth / 2);
+        this.y = -(this.canvasHeight / 2 - window.innerHeight / 2);
+        this.targetX = this.x;
+        this.targetY = this.y;
+      }
+      
+      setupEvents() {
+        // Mouse
+        this.container.addEventListener('mousedown', (e) => this.onDown(e.clientX, e.clientY, e));
+        window.addEventListener('mousemove', (e) => this.onMove(e.clientX, e.clientY));
+        window.addEventListener('mouseup', () => this.onUp());
+        
+        // Touch
+        this.container.addEventListener('touchstart', (e) => {
+          if (e.touches.length === 1) {
+            this.onDown(e.touches[0].clientX, e.touches[0].clientY, e);
+          }
+        }, { passive: false });
+        
+        window.addEventListener('touchmove', (e) => {
+          if (e.touches.length === 1) {
+            e.preventDefault();
+            this.onMove(e.touches[0].clientX, e.touches[0].clientY);
+          }
+        }, { passive: false });
+        
+        window.addEventListener('touchend', () => this.onUp());
+        
+        // Wheel zoom - straight forward/backward only
+        this.container.addEventListener('wheel', (e) => {
+          e.preventDefault();
+          
+          // Subtle zoom speed
+          const zoomSpeed = 0.001;
+          const delta = 1 - (e.deltaY * zoomSpeed);
+          this.targetScale = Math.max(this.minScale, Math.min(this.maxScale, this.targetScale * delta));
+        }, { passive: false });
+        
+        // Viewer close
+        document.getElementById('viewer-backdrop').addEventListener('click', () => this.closeViewer());
+        document.getElementById('viewer-close').addEventListener('click', () => this.closeViewer());
+        
+        // Grid toggle
+        this.gridToggle.addEventListener('click', () => this.toggleGrid());
+        
+        // Grid close button
+        document.getElementById('grid-close').addEventListener('click', () => this.toggleGrid());
+        
+        // Keyboard
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            if (this.viewer.classList.contains('active')) this.closeViewer();
+            else if (this.isGridView) this.toggleGrid();
+          }
+          if (e.key === 'g' || e.key === 'G') this.toggleGrid();
+        });
+      }
+      
+      onDown(px, py, e) {
+        this.isDragging = true;
+        this.dragStarted = false;
+        this.startX = px;
+        this.startY = py;
+        this.lastX = px;
+        this.lastY = py;
+        this.velX = 0;
+        this.velY = 0;
+        document.body.style.cursor = 'grabbing';
+      }
+      
+      onMove(px, py) {
+        if (!this.isDragging) return;
+        
+        const dx = px - this.lastX;
+        const dy = py - this.lastY;
+        
+        // Check if drag threshold exceeded
+        if (Math.abs(px - this.startX) > 5 || Math.abs(py - this.startY) > 5) {
+          this.dragStarted = true;
+        }
+        
+        this.velX = dx * 0.8;
+        this.velY = dy * 0.8;
+        
+        this.targetX += dx;
+        this.targetY += dy;
+        
+        this.lastX = px;
+        this.lastY = py;
+      }
+      
+      onUp() {
+        this.isDragging = false;
+        document.body.style.cursor = 'grab';
+      }
+      
+      animate() {
+        // Apply momentum
+        if (!this.isDragging) {
+          this.targetX += this.velX;
+          this.targetY += this.velY;
+          this.velX *= this.friction;
+          this.velY *= this.friction;
+        }
+        
+        // Store previous scale for center-zoom calculation
+        const prevScale = this.scale;
+        
+        // Smooth ease towards target
+        this.x += (this.targetX - this.x) * this.ease;
+        this.y += (this.targetY - this.y) * this.ease;
+        this.scale += (this.targetScale - this.scale) * 0.06;
+        
+        // Adjust position to keep center fixed during zoom
+        if (Math.abs(this.scale - prevScale) > 0.0001) {
+          const centerX = window.innerWidth / 2;
+          const centerY = window.innerHeight / 2;
+          
+          // Point in canvas that should stay at screen center
+          const pivotX = (centerX - this.x) / prevScale;
+          const pivotY = (centerY - this.y) / prevScale;
+          
+          // Adjust position to keep pivot point at center
+          this.x = centerX - pivotX * this.scale;
+          this.y = centerY - pivotY * this.scale;
+          this.targetX = this.x;
+          this.targetY = this.y;
+        }
+        
+        // Apply transform
+        this.canvas.style.transform = `translate(${this.x}px, ${this.y}px) scale(${this.scale})`;
+        
+        // 3D depth effect - images scale and fade based on zoom and depth
+        const zoomLevel = this.scale;
+        
+        this.items.forEach(item => {
+          // Calculate virtual Z position based on depth layer
+          // depth 0 = closest (z = 100), depth 1 = middle (z = 0), depth 2 = far (z = -100)
+          const baseZ = (2 - item.depth) * 100 - 100;
+          
+          // As we zoom in, we "move forward" in Z space
+          const cameraZ = (zoomLevel - 1) * 150;
+          const relativeZ = baseZ + cameraZ;
+          
+          // Perspective scale - objects get bigger as they get closer
+          const perspective = 400;
+          const perspectiveScale = perspective / (perspective - relativeZ);
+          
+          // Clamp scale to reasonable values
+          const finalScale = Math.max(0.1, Math.min(4, perspectiveScale));
+          
+          // Fade out objects that are "behind" the camera or too close
+          let opacity = 1;
+          if (relativeZ > 300) {
+            // Object is passing us - fade out
+            opacity = Math.max(0, 1 - (relativeZ - 300) / 150);
+          } else if (relativeZ < -200) {
+            // Object is too far - slightly dim
+            opacity = Math.max(0.3, 1 + (relativeZ + 200) / 300);
+          }
+          
+          // Movement parallax - closer objects move more with drag
+          const moveParallax = Math.max(0.01, perspectiveScale * 0.02);
+          const moveX = (this.targetX - this.x) * moveParallax;
+          const moveY = (this.targetY - this.y) * moveParallax;
+          
+          // Apply transforms
+          item.el.style.left = `${item.baseX + moveX}px`;
+          item.el.style.top = `${item.baseY + moveY}px`;
+          item.el.style.transform = `scale(${finalScale})`;
+          item.el.style.opacity = opacity;
+          
+          // Adjust z-index based on relative Z (closer = higher z-index)
+          item.el.style.zIndex = Math.round(relativeZ + 200);
+        });
+        
+        // Update zoom indicator
+        this.zoomIndicator.textContent = `${Math.round(this.scale * 100)}%`;
+        
+        requestAnimationFrame(() => this.animate());
+      }
+      
+      openViewer(imgData) {
+        this.viewerImage.src = imgData.src;
+        this.viewerLabel.textContent = imgData.label;
+        this.viewer.classList.add('active');
+        document.body.style.cursor = 'default';
+      }
+      
+      closeViewer() {
+        this.viewer.classList.remove('active');
+        document.body.style.cursor = 'grab';
+      }
+      
+      toggleGrid() {
+        this.isGridView = !this.isGridView;
+        this.gridView.classList.toggle('active', this.isGridView);
+        this.gridToggle.classList.toggle('active', this.isGridView);
+        document.getElementById('grid-close').classList.toggle('active', this.isGridView);
+        document.body.style.cursor = this.isGridView ? 'default' : 'grab';
+        document.body.style.overflow = this.isGridView ? 'hidden' : '';
+      }
+    }
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      new Gallery();
+    });
+  </script>
+</body>
+</html>
