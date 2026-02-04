@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="description" content="ARTASAS - Immersive image gallery experience">
   <meta name="theme-color" content="#0a0a0f">
-  <title>Midjourney Gallery</title>
+  <title>ARTASAS</title>
   
   <style>
     *, *::before, *::after {
@@ -15,26 +15,20 @@
     }
     
     :root {
-      --bg-primary: #0a0a0f;
-      --bg-secondary: #12121a;
-      --text-primary: #e0e0e0;
-      --text-secondary: #6b7280;
-      --accent: #3b82f6;
       --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
     html, body {
       height: 100%;
       overflow: hidden;
-      background: #000000;
-      color: var(--text-primary);
+      background: #000;
+      color: #e0e0e0;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       cursor: grab;
       user-select: none;
       -webkit-user-select: none;
     }
     
-    /* Starfield background */
     body::before {
       content: '';
       position: fixed;
@@ -52,10 +46,8 @@
       opacity: 0.6;
     }
     
-    body:active {
-      cursor: grabbing;
-    }
-    
+    body:active { cursor: grabbing; }
+
     /* Logo */
     .logo {
       position: fixed;
@@ -71,37 +63,30 @@
       width: auto;
       opacity: 0.7;
     }
-    
-    /* Canvas Container */
+
+    /* Gallery */
     #gallery-container {
       position: fixed;
       inset: 0;
       overflow: hidden;
+      background: #000;
     }
     
     #gallery-canvas {
-      position: absolute;
-      width: 3000px;
-      height: 2200px;
-      will-change: transform;
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
     }
     
-    /* Gallery Item */
     .gallery-item {
-      position: absolute;
+      position: fixed;
       cursor: pointer;
-      border-radius: 4px;
+      border-radius: 6px;
       overflow: hidden;
-      background: #111;
-      transition: filter 0.2s ease, box-shadow 0.2s ease, opacity 0.3s ease;
+      background: #0a0a0a;
       pointer-events: auto;
-      transform-origin: center center;
-      will-change: transform, opacity;
-    }
-    
-    .gallery-item:hover {
-      filter: brightness(1.3) !important;
-      box-shadow: 0 0 100px rgba(100, 150, 255, 0.5);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      will-change: left, top, width, height, opacity;
     }
     
     .gallery-item img {
@@ -112,104 +97,252 @@
       pointer-events: none;
       -webkit-user-drag: none;
     }
-    
-    /* Base depth styling (will be modified by JS) */
-    .gallery-item[data-depth="0"] {
-      filter: brightness(1) saturate(1.1);
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
-    }
-    
-    .gallery-item[data-depth="1"] {
-      filter: brightness(0.8) saturate(0.9);
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-    }
-    
-    .gallery-item[data-depth="2"] {
-      filter: brightness(0.55) saturate(0.7);
-      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
-    }
-    
-    /* Image Viewer Overlay */
-    .viewer-overlay {
+
+    /* Image Detail */
+    .image-detail {
       position: fixed;
       inset: 0;
       z-index: 200;
+      background: #000;
       display: flex;
       opacity: 0;
       visibility: hidden;
-      transition: opacity var(--transition), visibility var(--transition);
+      transition: opacity 0.4s ease, visibility 0.4s ease;
     }
     
-    .viewer-overlay.active {
+    .image-detail.active {
       opacity: 1;
       visibility: visible;
     }
     
-    .viewer-backdrop {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(to right, transparent 30%, rgba(0, 0, 0, 0.85) 60%);
-    }
-    
-    .viewer-content {
-      position: relative;
-      margin-left: auto;
-      width: 55%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      padding: 60px;
-      transform: translateX(100%);
-      transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-      background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.4) 20%);
-    }
-    
-    .viewer-overlay.active .viewer-content {
-      transform: translateX(0);
-    }
-    
-    .viewer-image {
-      max-width: 100%;
-      max-height: 80vh;
-      object-fit: contain;
-      border-radius: 6px;
-      box-shadow: 
-        0 25px 100px rgba(0, 0, 0, 0.6),
-        0 0 100px rgba(50, 100, 200, 0.1);
-    }
-    
-    .viewer-label {
-      margin-top: 24px;
-      font-size: 12px;
-      color: rgba(255, 255, 255, 0.4);
-      letter-spacing: 0.1em;
-      text-transform: lowercase;
-    }
-    
-    .viewer-close {
-      position: absolute;
+    .detail-close {
+      position: fixed;
       top: 24px;
-      right: 24px;
-      width: 36px;
-      height: 36px;
+      left: 24px;
+      z-index: 210;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 30px;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .detail-close:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+    }
+    
+    .detail-image-area {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 100px;
+      position: relative;
+      min-height: 100vh;
+    }
+    
+    .detail-image-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      max-width: calc(100% - 100px);
+    }
+    
+    .detail-image {
+      display: block;
+      max-width: 100%;
+      max-height: 85vh;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      border-radius: 12px;
+      box-shadow: 0 40px 120px rgba(0, 0, 0, 0.6);
+      margin: auto;
+    }
+    
+    .nav-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 48px;
+      height: 48px;
       display: flex;
       align-items: center;
       justify-content: center;
       background: transparent;
-      border: none;
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 50%;
       color: rgba(255, 255, 255, 0.5);
       cursor: pointer;
-      transition: color var(--transition), background var(--transition);
+      transition: all 0.3s ease;
+      z-index: 10;
     }
     
-    .viewer-close:hover {
-      background: rgba(255, 255, 255, 0.1);
+    .nav-arrow:hover {
+      border-color: rgba(255, 255, 255, 0.5);
+      color: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .nav-arrow svg { width: 20px; height: 20px; }
+    .nav-arrow-left { left: 24px; }
+    .nav-arrow-right { right: 24px; }
+    
+    .image-counter {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.35);
+      letter-spacing: 0.15em;
+    }
+
+    /* Sidebar */
+    .detail-sidebar {
+      width: 320px;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 80px 30px 40px;
+      background: rgba(255, 255, 255, 0.02);
+      border-left: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+    
+    .section-title {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: rgba(255, 255, 255, 0.35);
+    }
+
+    /* Colors */
+    .color-palette { display: flex; flex-direction: column; gap: 14px; }
+    
+    .color-swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+    
+    .color-swatch {
+      position: relative;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    
+    .color-swatch:hover { transform: scale(1.2); z-index: 10; }
+    
+    .color-hex {
+      position: absolute;
+      bottom: -26px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 9px;
+      font-family: 'SF Mono', Monaco, monospace;
+      letter-spacing: 0.02em;
+      color: rgba(255, 255, 255, 0.7);
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      background: rgba(0, 0, 0, 0.9);
+      padding: 3px 6px;
+      border-radius: 3px;
+    }
+    
+    .color-swatch:hover .color-hex { opacity: 1; }
+
+    /* Description */
+    .detail-description { display: flex; flex-direction: column; gap: 12px; }
+    
+    .detail-description-text {
+      font-size: 14px;
+      line-height: 1.7;
+      color: rgba(255, 255, 255, 0.65);
+    }
+    
+    .detail-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    
+    .detail-tag {
+      padding: 5px 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 14px;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    /* Actions */
+    .save-board-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 20px;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 6px;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 12px;
+      letter-spacing: 0.05em;
+      cursor: default;
+    }
+    
+    .save-board-btn.saved {
+      border-color: rgba(255, 255, 255, 0.6);
       color: rgba(255, 255, 255, 0.9);
     }
     
+    .save-board-btn svg { width: 14px; height: 14px; }
+
+    /* Saved By */
+    .saved-by { display: flex; flex-direction: column; gap: 12px; }
+    .saved-by-users { display: flex; flex-wrap: wrap; gap: 8px; }
+    
+    .saved-user {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+    }
+    
+    .saved-user-avatar {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .saved-user-name { font-size: 11px; color: rgba(255, 255, 255, 0.6); }
+    
+    .saved-count {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 50%;
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    #color-canvas { display: none; }
+
     /* Controls */
     .controls {
       position: fixed;
@@ -228,10 +361,7 @@
       letter-spacing: 0.02em;
     }
     
-    .controls-help span {
-      margin: 0 8px;
-      color: rgba(255, 255, 255, 0.2);
-    }
+    .controls-help span { margin: 0 8px; color: rgba(255, 255, 255, 0.2); }
     
     .grid-toggle {
       display: flex;
@@ -260,21 +390,9 @@
       color: rgba(255, 255, 255, 0.9);
     }
     
-    .grid-icon {
-      display: grid;
-      grid-template-columns: repeat(2, 5px);
-      gap: 2px;
-    }
+    .grid-icon { display: grid; grid-template-columns: repeat(2, 5px); gap: 2px; }
+    .grid-icon span { width: 5px; height: 5px; background: currentColor; border-radius: 1px; opacity: 0.8; }
     
-    .grid-icon span {
-      width: 5px;
-      height: 5px;
-      background: currentColor;
-      border-radius: 1px;
-      opacity: 0.8;
-    }
-    
-    /* Zoom indicator */
     .zoom-indicator {
       position: fixed;
       bottom: 20px;
@@ -285,7 +403,7 @@
       font-variant-numeric: tabular-nums;
       letter-spacing: 0.05em;
     }
-    
+
     /* Grid View */
     .grid-view {
       position: fixed;
@@ -299,10 +417,7 @@
       transition: opacity var(--transition), visibility var(--transition);
     }
     
-    .grid-view.active {
-      opacity: 1;
-      visibility: visible;
-    }
+    .grid-view.active { opacity: 1; visibility: visible; }
     
     .grid-close {
       position: fixed;
@@ -326,22 +441,14 @@
       visibility: hidden;
     }
     
-    .grid-view.active ~ .grid-close,
-    .grid-close.active {
-      opacity: 1;
-      visibility: visible;
-    }
+    .grid-close.active { opacity: 1; visibility: visible; }
     
     .grid-close:hover {
       background: rgba(255, 255, 255, 0.15);
       color: rgba(255, 255, 255, 0.9);
-      border-color: rgba(255, 255, 255, 0.25);
     }
     
-    .grid-close svg {
-      width: 14px;
-      height: 14px;
-    }
+    .grid-close svg { width: 14px; height: 14px; }
     
     .grid-view-content {
       display: grid;
@@ -356,23 +463,18 @@
       border-radius: 4px;
       overflow: hidden;
       cursor: pointer;
-      transition: transform var(--transition), box-shadow var(--transition), filter var(--transition);
+      transition: transform var(--transition), box-shadow var(--transition);
       background: #111;
     }
     
     .grid-view-item:hover {
       transform: scale(1.03);
       box-shadow: 0 15px 50px rgba(0, 0, 0, 0.6);
-      filter: brightness(1.1);
       z-index: 1;
     }
     
-    .grid-view-item img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    
+    .grid-view-item img { width: 100%; height: 100%; object-fit: cover; }
+
     /* Loading */
     .loading {
       position: fixed;
@@ -385,10 +487,7 @@
       transition: opacity 0.6s ease;
     }
     
-    .loading.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
+    .loading.hidden { opacity: 0; pointer-events: none; }
     
     .loading-spinner {
       width: 32px;
@@ -399,32 +498,31 @@
       animation: spin 0.8s linear infinite;
     }
     
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    
+    @keyframes spin { to { transform: rotate(360deg); } }
+
     /* Responsive */
-    @media (max-width: 768px) {
-      .viewer-content {
+    @media (max-width: 900px) {
+      .image-detail { flex-direction: column; }
+      .detail-image-area { padding: 80px 60px 40px; min-height: auto; }
+      .detail-image-container { max-width: 100%; }
+      .detail-image { max-height: 50vh; }
+      .nav-arrow-left { left: 10px; }
+      .nav-arrow-right { right: 10px; }
+      .detail-sidebar {
         width: 100%;
-        padding: 20px;
-      }
-      
-      .controls-help {
-        display: none;
-      }
-      
-      .grid-view {
-        padding: 70px 16px 16px;
-      }
-      
-      .grid-view-content {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 8px;
+        height: auto;
+        border-left: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+        padding: 30px 20px;
       }
     }
     
-    /* Reduced motion */
+    @media (max-width: 768px) {
+      .controls-help { display: none; }
+      .grid-view { padding: 70px 16px 16px; }
+      .grid-view-content { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+    }
+    
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         transition-duration: 0.01ms !important;
@@ -434,136 +532,162 @@
   </style>
 </head>
 <body>
-  <!-- Loading -->
-  <div class="loading" id="loading">
-    <div class="loading-spinner"></div>
-  </div>
+  <div class="loading" id="loading"><div class="loading-spinner"></div></div>
   
-  <!-- Logo -->
-  <div class="logo">
-    <img src="logo.png" alt="Logo">
-  </div>
+  <div class="logo"><img src="logo.png" alt="ARTASAS"></div>
   
-  <!-- Gallery Canvas -->
-  <div id="gallery-container">
-    <div id="gallery-canvas"></div>
-  </div>
+  <div id="gallery-container"><div id="gallery-canvas"></div></div>
   
-  <!-- Image Viewer -->
-  <div class="viewer-overlay" id="viewer">
-    <div class="viewer-backdrop" id="viewer-backdrop"></div>
-    <div class="viewer-content">
-      <button class="viewer-close" id="viewer-close" aria-label="Close">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M18 6L6 18M6 6l12 12"/>
-        </svg>
+  <div class="image-detail" id="image-detail">
+    <button class="detail-close" id="detail-close">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+      Back
+    </button>
+    
+    <div class="detail-image-area">
+      <button class="nav-arrow nav-arrow-left" id="nav-prev">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
       </button>
-      <img class="viewer-image" id="viewer-image" src="" alt="">
-      <div class="viewer-label" id="viewer-label">perplexity</div>
+      
+      <div class="detail-image-container">
+        <img class="detail-image" id="detail-image" src="" alt="">
+      </div>
+      
+      <button class="nav-arrow nav-arrow-right" id="nav-next">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+      
+      <div class="image-counter" id="image-counter">1 / 42</div>
+    </div>
+    
+    <div class="detail-sidebar">
+      <div class="color-palette">
+        <div class="section-title">Colors</div>
+        <div class="color-swatches" id="color-swatches"></div>
+      </div>
+      
+      <div class="detail-description">
+        <div class="section-title">About</div>
+        <p class="detail-description-text">A stunning visual composition exploring the interplay of light, shadow, and form.</p>
+        <div class="detail-tags">
+          <span class="detail-tag">artasas</span>
+          <span class="detail-tag">digital art</span>
+          <span class="detail-tag">creative</span>
+        </div>
+      </div>
+      
+      <div>
+        <button class="save-board-btn" id="save-board-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+          </svg>
+          Save to Board
+        </button>
+      </div>
+      
+      <div class="saved-by">
+        <div class="section-title">Also saved by</div>
+        <div class="saved-by-users">
+          <div class="saved-user"><div class="saved-user-avatar"></div><span class="saved-user-name">@maria</span></div>
+          <div class="saved-user"><div class="saved-user-avatar"></div><span class="saved-user-name">@alex</span></div>
+          <div class="saved-user"><div class="saved-user-avatar"></div><span class="saved-user-name">@studio</span></div>
+          <div class="saved-count">+12</div>
+        </div>
+      </div>
     </div>
   </div>
   
-  <!-- Grid View -->
+  <canvas id="color-canvas"></canvas>
+  
   <div class="grid-view" id="grid-view">
     <div class="grid-view-content" id="grid-content"></div>
   </div>
   
-  <!-- Grid Close Button -->
   <button class="grid-close" id="grid-close">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M18 6L6 18M6 6l12 12"/>
-    </svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
     CLOSE
   </button>
   
-  <!-- Controls -->
   <div class="controls">
-    <div class="controls-help">
-      Drag to pan<span>·</span>Scroll to zoom<span>·</span>Click to view
-    </div>
+    <div class="controls-help">Drag to pan<span>·</span>Scroll to zoom<span>·</span>Click to view</div>
     <button class="grid-toggle" id="grid-toggle">
-      <div class="grid-icon">
-        <span></span><span></span><span></span><span></span>
-      </div>
+      <div class="grid-icon"><span></span><span></span><span></span><span></span></div>
       GRID
     </button>
   </div>
   
-  <!-- Zoom Indicator -->
-  <div class="zoom-indicator" id="zoom-indicator">100%</div>
+  <div class="zoom-indicator" id="zoom-indicator">0%</div>
   
   <script>
-    // Image data - using images from the workspace
     const images = [
-      { src: 'art.jpeg', label: 'art' },
-      { src: 'FJanx6YWYAo8KW9.jpeg', label: 'artasas' },
-      { src: 'G__9DIUbcAAt_cy.jpeg', label: 'artasas' },
-      { src: 'G__MaODbEAQ7Rn3.jpeg', label: 'artasas' },
-      { src: 'G_6ATQ2XoAA95dV.jpeg', label: 'artasas' },
-      { src: 'G_758bdWwAATy_9.jpeg', label: 'artasas' },
-      { src: 'G_Cw8iBW0AAcDiV.jpeg', label: 'artasas' },
-      { src: 'G_NWn8FaIAEO25I.jpeg', label: 'artasas' },
-      { src: 'G_vet9yWcAARLKT.jpeg', label: 'artasas' },
-      { src: 'G046ZVHWkAABcQ1.jpeg', label: 'artasas' },
-      { src: 'G06JwjsWQAAw4Y5.jpeg', label: 'artasas' },
-      { src: 'G2naqcabIAEp8jE.jpeg', label: 'artasas' },
-      { src: 'G36PhxlWcAAxPr5.jpeg', label: 'artasas' },
-      { src: 'G5BFNOzWYAAuMHi.jpeg', label: 'artasas' },
-      { src: 'G8lehBTW8AA6C5u.jpeg', label: 'artasas' },
-      { src: 'G93cWkQXcAAXPcr.jpeg', label: 'artasas' },
-      { src: 'GLnfiyfWQAItm-O.jpeg', label: 'artasas' },
-      { src: 'Gz7G_5rXEAAc7mt.jpeg', label: 'artasas' },
-      { src: 'GzHnXerWoAAp5lI.jpeg', label: 'artasas' },
-      { src: 'HAD4TeTbAAA7suu.jpeg', label: 'artasas' },
-      { src: 'HAE4mByWMAAAzbd.jpeg', label: 'artasas' },
-      { src: 'HAGeCV-XkAAVCu2.jpeg', label: 'artasas' }
-    ];
-    
+      'logo.png', 'art.jpeg', '025ce04a-753c-4ac0-90fc-724966e35fa5.jpeg',
+      '04d800fd-d969-41e8-adf8-64ebf6eb37e1.jpeg', '16fab7bb-6495-4d45-b25d-494055a4b33c.jpeg',
+      '3df2bb29-8609-42d8-ac77-e68dbef4b475.jpeg', '6a8b2dc0-12fc-4ba3-aa31-aff359a761e8.jpeg',
+      '6e89fb39-3096-4e92-9f32-e6101f6ff825.jpeg', '6f53ae36-505b-440f-affe-0cc0cf9e8529.jpeg',
+      '71097654-382a-46ec-a3d4-2478ae087251.jpeg', 'acf8fea5-220f-445e-8785-2ddac7bf4640.jpeg',
+      'b54c9dba-2d38-4b15-b7b0-a2557faddfd5.jpeg', 'c2edbde2-2f5b-49f5-9349-174472851ef5.jpeg',
+      'c9d73c80-5b88-4cb9-95c5-8e126dceb88b.jpeg', 'd85e35fb-751b-4344-8bf3-e4851c8ddd43.jpeg',
+      'e08063e1-19be-413f-9acc-10c3cced32f4.jpeg', 'e969743e-8178-498c-85b6-365b2a2080a5.jpeg',
+      'f0118967-4c43-4fd1-80a7-a4d855a14f2c.jpeg', 'f6c59438-1a4a-47f2-a093-fe18e1bad0da.jpeg',
+      'FJanx6YWYAo8KW9.jpeg', 'G__9DIUbcAAt_cy.jpeg', 'G__MaODbEAQ7Rn3.jpeg',
+      'G_6ATQ2XoAA95dV.jpeg', 'G_758bdWwAATy_9.jpeg', 'G_Cw8iBW0AAcDiV.jpeg',
+      'G_NWn8FaIAEO25I.jpeg', 'G_vet9yWcAARLKT.jpeg', 'G046ZVHWkAABcQ1.jpeg',
+      'G06JwjsWQAAw4Y5.jpeg', 'G2naqcabIAEp8jE.jpeg', 'G36PhxlWcAAxPr5.jpeg',
+      'G5BFNOzWYAAuMHi.jpeg', 'G8lehBTW8AA6C5u.jpeg', 'G93cWkQXcAAXPcr.jpeg',
+      'GLnfiyfWQAItm-O.jpeg', 'Gz7G_5rXEAAc7mt.jpeg', 'GzHnXerWoAAp5lI.jpeg',
+      'HAD4TeTbAAA7suu.jpeg', 'HAE4mByWMAAAzbd.jpeg', 'HAGeCV-XkAAVCu2.jpeg',
+      'LOGO - cópia.png', 'TRUST.png'
+    ].map(src => ({ src, label: 'artasas' }));
+
     class Gallery {
       constructor() {
         this.container = document.getElementById('gallery-container');
         this.canvas = document.getElementById('gallery-canvas');
-        this.viewer = document.getElementById('viewer');
-        this.viewerImage = document.getElementById('viewer-image');
-        this.viewerLabel = document.getElementById('viewer-label');
+        this.imageDetail = document.getElementById('image-detail');
+        this.detailImage = document.getElementById('detail-image');
+        this.colorSwatches = document.getElementById('color-swatches');
+        this.saveBoardBtn = document.getElementById('save-board-btn');
+        this.colorCanvas = document.getElementById('color-canvas');
         this.gridView = document.getElementById('grid-view');
         this.gridContent = document.getElementById('grid-content');
         this.gridToggle = document.getElementById('grid-toggle');
         this.zoomIndicator = document.getElementById('zoom-indicator');
         this.loading = document.getElementById('loading');
         
-        // Position state
-        this.x = 0;
-        this.y = 0;
-        this.targetX = 0;
-        this.targetY = 0;
-        this.scale = 1;
-        this.targetScale = 1;
+        this.savedImages = new Set();
+        this.currentImageIndex = 0;
+        this.imageData = [];
+        this.items = [];
+        this.isGridView = false;
         
-        // Velocity for momentum
+        // Camera
+        this.cameraZ = 0;
+        this.targetCameraZ = 0;
+        this.panX = 0;
+        this.panY = 0;
+        this.targetPanX = 0;
+        this.targetPanY = 0;
         this.velX = 0;
         this.velY = 0;
         
-        // Drag state
+        // Drag
         this.isDragging = false;
         this.dragStarted = false;
-        this.startX = 0;
-        this.startY = 0;
         this.lastX = 0;
         this.lastY = 0;
         
         // Settings
-        this.friction = 0.95;
+        this.friction = 0.92;
         this.ease = 0.08;
-        this.minScale = 0.3;
-        this.maxScale = 5.0;
-        
-        this.isGridView = false;
-        this.items = [];
-        
-        // Canvas size (smaller = images closer together)
-        this.canvasWidth = 3000;
-        this.canvasHeight = 2200;
+        this.zEase = 0.06;
+        this.spaceWidth = 2000;
+        this.spaceHeight = 1500;
+        this.spaceDepth = 8000;
+        this.minZ = -500;
+        this.maxZ = this.spaceDepth + 500;
+        this.fov = 800;
         
         this.init();
       }
@@ -572,47 +696,36 @@
         await this.loadImages();
         this.createGalleryItems();
         this.createGridView();
-        this.centerView();
         this.setupEvents();
         this.animate();
-        
-        setTimeout(() => {
-          this.loading.classList.add('hidden');
-        }, 500);
+        setTimeout(() => this.loading.classList.add('hidden'), 500);
       }
       
       async loadImages() {
-        const promises = images.map(img => {
-          return new Promise((resolve) => {
+        this.imageData = await Promise.all(images.map(img => 
+          new Promise(resolve => {
             const image = new Image();
             image.onload = () => resolve({ ...img, width: image.width, height: image.height });
             image.onerror = () => resolve({ ...img, width: 300, height: 200 });
             image.src = img.src;
-          });
-        });
-        this.imageData = await Promise.all(promises);
+          })
+        ));
       }
       
       createGalleryItems() {
-        const positions = this.generatePositions();
+        const total = this.imageData.length;
         
-        positions.forEach((pos, index) => {
-          const imgData = this.imageData[index];
+        this.imageData.forEach((imgData, index) => {
           const item = document.createElement('div');
           item.className = 'gallery-item';
           
-          const baseSize = pos.depth === 0 ? 300 : pos.depth === 1 ? 200 : 120;
+          const baseSize = 180 + Math.random() * 150;
           const ratio = imgData.width / imgData.height;
           const w = ratio > 1 ? baseSize : baseSize * ratio;
           const h = ratio > 1 ? baseSize / ratio : baseSize;
           
-          item.style.left = `${pos.x}px`;
-          item.style.top = `${pos.y}px`;
           item.style.width = `${w}px`;
           item.style.height = `${h}px`;
-          item.dataset.depth = pos.depth;
-          item.dataset.baseX = pos.x;
-          item.dataset.baseY = pos.y;
           
           const img = document.createElement('img');
           img.src = imgData.src;
@@ -620,47 +733,20 @@
           img.draggable = false;
           
           item.appendChild(img);
-          item.addEventListener('click', () => {
-            if (!this.dragStarted) {
-              this.openViewer(imgData);
-            }
-          });
-          
+          item.addEventListener('click', () => !this.dragStarted && this.openDetail(imgData));
           this.canvas.appendChild(item);
-          this.items.push({ el: item, depth: pos.depth, baseX: pos.x, baseY: pos.y });
+          
+          this.items.push({ 
+            el: item,
+            x: (Math.random() - 0.5) * this.spaceWidth,
+            y: (Math.random() - 0.5) * this.spaceHeight,
+            z: (index / total) * this.spaceDepth + (Math.random() - 0.5) * 300,
+            width: w,
+            height: h
+          });
         });
-      }
-      
-      generatePositions() {
-        const positions = [];
-        const depths = [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2];
-        const used = [];
         
-        for (let i = 0; i < images.length; i++) {
-          const depth = depths[i] || 2;
-          const size = depth === 0 ? 280 : depth === 1 ? 180 : 110;
-          let x, y, tries = 0;
-          
-          do {
-            x = 100 + Math.random() * (this.canvasWidth - size - 200);
-            y = 100 + Math.random() * (this.canvasHeight - size - 200);
-            tries++;
-          } while (this.checkOverlap(x, y, size, used) && tries < 100);
-          
-          used.push({ x, y, size: size + 20 });
-          positions.push({ x, y, depth });
-        }
-        return positions;
-      }
-      
-      checkOverlap(x, y, size, areas) {
-        for (const a of areas) {
-          if (Math.abs(x - a.x) < (size + a.size) / 2.2 && 
-              Math.abs(y - a.y) < (size + a.size) / 2.2) {
-            return true;
-          }
-        }
-        return false;
+        this.items.sort((a, b) => b.z - a.z);
       }
       
       createGridView() {
@@ -671,32 +757,21 @@
           img.src = imgData.src;
           img.alt = imgData.label;
           item.appendChild(img);
-          item.addEventListener('click', () => this.openViewer(imgData));
+          item.addEventListener('click', () => this.openDetail(imgData));
           this.gridContent.appendChild(item);
         });
       }
       
-      centerView() {
-        this.x = -(this.canvasWidth / 2 - window.innerWidth / 2);
-        this.y = -(this.canvasHeight / 2 - window.innerHeight / 2);
-        this.targetX = this.x;
-        this.targetY = this.y;
-      }
-      
       setupEvents() {
-        // Mouse
-        this.container.addEventListener('mousedown', (e) => this.onDown(e.clientX, e.clientY, e));
-        window.addEventListener('mousemove', (e) => this.onMove(e.clientX, e.clientY));
+        this.container.addEventListener('mousedown', e => this.onDown(e.clientX, e.clientY));
+        window.addEventListener('mousemove', e => this.onMove(e.clientX, e.clientY));
         window.addEventListener('mouseup', () => this.onUp());
         
-        // Touch
-        this.container.addEventListener('touchstart', (e) => {
-          if (e.touches.length === 1) {
-            this.onDown(e.touches[0].clientX, e.touches[0].clientY, e);
-          }
+        this.container.addEventListener('touchstart', e => {
+          if (e.touches.length === 1) this.onDown(e.touches[0].clientX, e.touches[0].clientY);
         }, { passive: false });
         
-        window.addEventListener('touchmove', (e) => {
+        window.addEventListener('touchmove', e => {
           if (e.touches.length === 1) {
             e.preventDefault();
             this.onMove(e.touches[0].clientX, e.touches[0].clientY);
@@ -705,41 +780,36 @@
         
         window.addEventListener('touchend', () => this.onUp());
         
-        // Wheel zoom - straight forward/backward only
-        this.container.addEventListener('wheel', (e) => {
+        this.container.addEventListener('wheel', e => {
           e.preventDefault();
-          
-          // Subtle zoom speed
-          const zoomSpeed = 0.001;
-          const delta = 1 - (e.deltaY * zoomSpeed);
-          this.targetScale = Math.max(this.minScale, Math.min(this.maxScale, this.targetScale * delta));
+          this.targetCameraZ = Math.max(this.minZ, Math.min(this.maxZ, this.targetCameraZ + e.deltaY * 2));
         }, { passive: false });
         
-        // Viewer close
-        document.getElementById('viewer-backdrop').addEventListener('click', () => this.closeViewer());
-        document.getElementById('viewer-close').addEventListener('click', () => this.closeViewer());
-        
-        // Grid toggle
+        document.getElementById('detail-close').addEventListener('click', () => this.closeDetail());
+        document.getElementById('nav-prev').addEventListener('click', () => this.navigateImage(-1));
+        document.getElementById('nav-next').addEventListener('click', () => this.navigateImage(1));
+        this.saveBoardBtn.addEventListener('click', () => this.toggleSave());
         this.gridToggle.addEventListener('click', () => this.toggleGrid());
-        
-        // Grid close button
         document.getElementById('grid-close').addEventListener('click', () => this.toggleGrid());
         
-        // Keyboard
-        document.addEventListener('keydown', (e) => {
+        document.addEventListener('keydown', e => {
           if (e.key === 'Escape') {
-            if (this.viewer.classList.contains('active')) this.closeViewer();
+            if (this.imageDetail.classList.contains('active')) this.closeDetail();
             else if (this.isGridView) this.toggleGrid();
           }
           if (e.key === 'g' || e.key === 'G') this.toggleGrid();
+          if (this.imageDetail.classList.contains('active')) {
+            if (e.key === 'ArrowLeft') this.navigateImage(-1);
+            if (e.key === 'ArrowRight') this.navigateImage(1);
+          }
         });
       }
       
-      onDown(px, py, e) {
+      onDown(px, py) {
         this.isDragging = true;
         this.dragStarted = false;
-        this.startX = px;
-        this.startY = py;
+        this.startDragX = px;
+        this.startDragY = py;
         this.lastX = px;
         this.lastY = py;
         this.velX = 0;
@@ -749,21 +819,13 @@
       
       onMove(px, py) {
         if (!this.isDragging) return;
-        
         const dx = px - this.lastX;
         const dy = py - this.lastY;
-        
-        // Check if drag threshold exceeded
-        if (Math.abs(px - this.startX) > 5 || Math.abs(py - this.startY) > 5) {
-          this.dragStarted = true;
-        }
-        
-        this.velX = dx * 0.8;
-        this.velY = dy * 0.8;
-        
-        this.targetX += dx;
-        this.targetY += dy;
-        
+        if (Math.abs(px - this.startDragX) > 5 || Math.abs(py - this.startDragY) > 5) this.dragStarted = true;
+        this.velX = dx * 0.7;
+        this.velY = dy * 0.7;
+        this.targetPanX += dx * 1.5;
+        this.targetPanY += dy * 1.5;
         this.lastX = px;
         this.lastY = py;
       }
@@ -774,100 +836,159 @@
       }
       
       animate() {
-        // Apply momentum
         if (!this.isDragging) {
-          this.targetX += this.velX;
-          this.targetY += this.velY;
+          this.targetPanX += this.velX;
+          this.targetPanY += this.velY;
           this.velX *= this.friction;
           this.velY *= this.friction;
         }
         
-        // Store previous scale for center-zoom calculation
-        const prevScale = this.scale;
+        this.panX += (this.targetPanX - this.panX) * this.ease;
+        this.panY += (this.targetPanY - this.panY) * this.ease;
+        this.cameraZ += (this.targetCameraZ - this.cameraZ) * this.zEase;
         
-        // Smooth ease towards target
-        this.x += (this.targetX - this.x) * this.ease;
-        this.y += (this.targetY - this.y) * this.ease;
-        this.scale += (this.targetScale - this.scale) * 0.06;
-        
-        // Adjust position to keep center fixed during zoom
-        if (Math.abs(this.scale - prevScale) > 0.0001) {
-          const centerX = window.innerWidth / 2;
-          const centerY = window.innerHeight / 2;
-          
-          // Point in canvas that should stay at screen center
-          const pivotX = (centerX - this.x) / prevScale;
-          const pivotY = (centerY - this.y) / prevScale;
-          
-          // Adjust position to keep pivot point at center
-          this.x = centerX - pivotX * this.scale;
-          this.y = centerY - pivotY * this.scale;
-          this.targetX = this.x;
-          this.targetY = this.y;
-        }
-        
-        // Apply transform
-        this.canvas.style.transform = `translate(${this.x}px, ${this.y}px) scale(${this.scale})`;
-        
-        // 3D depth effect - images scale and fade based on zoom and depth
-        const zoomLevel = this.scale;
+        const cx = window.innerWidth / 2;
+        const cy = window.innerHeight / 2;
         
         this.items.forEach(item => {
-          // Calculate virtual Z position based on depth layer
-          // depth 0 = closest (z = 100), depth 1 = middle (z = 0), depth 2 = far (z = -100)
-          const baseZ = (2 - item.depth) * 100 - 100;
+          const relativeZ = item.z - this.cameraZ;
           
-          // As we zoom in, we "move forward" in Z space
-          const cameraZ = (zoomLevel - 1) * 150;
-          const relativeZ = baseZ + cameraZ;
-          
-          // Perspective scale - objects get bigger as they get closer
-          const perspective = 400;
-          const perspectiveScale = perspective / (perspective - relativeZ);
-          
-          // Clamp scale to reasonable values
-          const finalScale = Math.max(0.1, Math.min(4, perspectiveScale));
-          
-          // Fade out objects that are "behind" the camera or too close
-          let opacity = 1;
-          if (relativeZ > 300) {
-            // Object is passing us - fade out
-            opacity = Math.max(0, 1 - (relativeZ - 300) / 150);
-          } else if (relativeZ < -200) {
-            // Object is too far - slightly dim
-            opacity = Math.max(0.3, 1 + (relativeZ + 200) / 300);
+          if (relativeZ < 10) {
+            item.el.style.display = 'none';
+            return;
           }
           
-          // Movement parallax - closer objects move more with drag
-          const moveParallax = Math.max(0.01, perspectiveScale * 0.02);
-          const moveX = (this.targetX - this.x) * moveParallax;
-          const moveY = (this.targetY - this.y) * moveParallax;
+          item.el.style.display = 'block';
+          const scale = this.fov / relativeZ;
+          const screenX = cx + (item.x + this.panX * 0.8) * scale;
+          const screenY = cy + (item.y + this.panY * 0.8) * scale;
+          const w = item.width * scale;
+          const h = item.height * scale;
           
-          // Apply transforms
-          item.el.style.left = `${item.baseX + moveX}px`;
-          item.el.style.top = `${item.baseY + moveY}px`;
-          item.el.style.transform = `scale(${finalScale})`;
+          let opacity = 1;
+          if (relativeZ < 100) opacity = relativeZ / 100;
+          else if (relativeZ > 3000) opacity = Math.max(0.2, 1 - (relativeZ - 3000) / 2000);
+          
+          item.el.style.left = `${screenX - w/2}px`;
+          item.el.style.top = `${screenY - h/2}px`;
+          item.el.style.width = `${w}px`;
+          item.el.style.height = `${h}px`;
           item.el.style.opacity = opacity;
-          
-          // Adjust z-index based on relative Z (closer = higher z-index)
-          item.el.style.zIndex = Math.round(relativeZ + 200);
+          item.el.style.zIndex = Math.round(10000 - relativeZ);
+          item.el.style.filter = relativeZ > 2000 ? `blur(${Math.min(3, (relativeZ - 2000) / 1000)}px)` : 'none';
         });
         
-        // Update zoom indicator
-        this.zoomIndicator.textContent = `${Math.round(this.scale * 100)}%`;
-        
+        this.zoomIndicator.textContent = `${Math.round((this.cameraZ / this.spaceDepth) * 100)}%`;
         requestAnimationFrame(() => this.animate());
       }
       
-      openViewer(imgData) {
-        this.viewerImage.src = imgData.src;
-        this.viewerLabel.textContent = imgData.label;
-        this.viewer.classList.add('active');
+      openDetail(imgData) {
+        this.currentImage = imgData;
+        this.currentImageIndex = this.imageData.findIndex(img => img.src === imgData.src);
+        this.updateDetailView(imgData);
+        this.imageDetail.classList.add('active');
         document.body.style.cursor = 'default';
       }
       
-      closeViewer() {
-        this.viewer.classList.remove('active');
+      updateDetailView(imgData) {
+        this.detailImage.src = imgData.src;
+        document.getElementById('image-counter').textContent = `${this.currentImageIndex + 1} / ${this.imageData.length}`;
+        
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => this.extractColors(img);
+        img.src = imgData.src;
+        
+        this.currentImage = imgData;
+        this.updateSaveButton(this.savedImages.has(imgData.src));
+      }
+      
+      navigateImage(dir) {
+        let idx = this.currentImageIndex + dir;
+        if (idx < 0) idx = this.imageData.length - 1;
+        if (idx >= this.imageData.length) idx = 0;
+        this.currentImageIndex = idx;
+        this.updateDetailView(this.imageData[idx]);
+      }
+      
+      extractColors(img) {
+        const ctx = this.colorCanvas.getContext('2d');
+        const size = 150;
+        this.colorCanvas.width = size;
+        this.colorCanvas.height = size;
+        ctx.drawImage(img, 0, 0, size, size);
+        const data = ctx.getImageData(0, 0, size, size).data;
+        
+        const colorMap = {};
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i], g = data[i + 1], b = data[i + 2];
+          const brightness = (r + g + b) / 3;
+          if (brightness < 15 || brightness > 245) continue;
+          
+          const key = `${Math.round(r / 16) * 16},${Math.round(g / 16) * 16},${Math.round(b / 16) * 16}`;
+          if (!colorMap[key]) colorMap[key] = { count: 0, r: 0, g: 0, b: 0 };
+          colorMap[key].count++;
+          colorMap[key].r += r;
+          colorMap[key].g += g;
+          colorMap[key].b += b;
+        }
+        
+        const sorted = Object.values(colorMap)
+          .map(c => ({ r: Math.round(c.r / c.count), g: Math.round(c.g / c.count), b: Math.round(c.b / c.count), count: c.count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 30);
+        
+        const distinct = [];
+        for (const color of sorted) {
+          const isDup = distinct.some(c => Math.abs(c.r - color.r) < 25 && Math.abs(c.g - color.g) < 25 && Math.abs(c.b - color.b) < 25);
+          if (!isDup && distinct.length < 10) distinct.push(color);
+        }
+        
+        distinct.sort((a, b) => Math.atan2(Math.sqrt(3) * (a.g - a.b), 2 * a.r - a.g - a.b) - Math.atan2(Math.sqrt(3) * (b.g - b.b), 2 * b.r - b.g - b.b));
+        this.displayColors(distinct);
+      }
+      
+      displayColors(colors) {
+        this.colorSwatches.innerHTML = '';
+        colors.forEach(color => {
+          const hex = '#' + [color.r, color.g, color.b].map(x => x.toString(16).padStart(2, '0')).join('').toUpperCase();
+          const swatch = document.createElement('div');
+          swatch.className = 'color-swatch';
+          swatch.style.background = `rgb(${color.r}, ${color.g}, ${color.b})`;
+          const textColor = (0.299 * color.r + 0.587 * color.g + 0.114 * color.b) / 255 > 0.5 ? '#000' : '#fff';
+          swatch.innerHTML = `<span class="color-hex" style="color: ${textColor}">${hex}</span>`;
+          swatch.addEventListener('click', () => {
+            navigator.clipboard.writeText(hex);
+            swatch.querySelector('.color-hex').textContent = 'Copied!';
+            swatch.querySelector('.color-hex').style.opacity = '1';
+            setTimeout(() => {
+              swatch.querySelector('.color-hex').textContent = hex;
+              swatch.querySelector('.color-hex').style.opacity = '';
+            }, 1000);
+          });
+          this.colorSwatches.appendChild(swatch);
+        });
+      }
+      
+      toggleSave() {
+        if (!this.currentImage) return;
+        const isSaved = this.savedImages.has(this.currentImage.src);
+        isSaved ? this.savedImages.delete(this.currentImage.src) : this.savedImages.add(this.currentImage.src);
+        this.updateSaveButton(!isSaved);
+      }
+      
+      updateSaveButton(isSaved) {
+        this.saveBoardBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="${isSaved ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+          </svg>
+          ${isSaved ? 'Saved' : 'Save to Board'}
+        `;
+        this.saveBoardBtn.classList.toggle('saved', isSaved);
+      }
+      
+      closeDetail() {
+        this.imageDetail.classList.remove('active');
         document.body.style.cursor = 'grab';
       }
       
@@ -877,14 +998,10 @@
         this.gridToggle.classList.toggle('active', this.isGridView);
         document.getElementById('grid-close').classList.toggle('active', this.isGridView);
         document.body.style.cursor = this.isGridView ? 'default' : 'grab';
-        document.body.style.overflow = this.isGridView ? 'hidden' : '';
       }
     }
     
-    // Initialize
-    document.addEventListener('DOMContentLoaded', () => {
-      new Gallery();
-    });
+    document.addEventListener('DOMContentLoaded', () => new Gallery());
   </script>
 </body>
 </html>
