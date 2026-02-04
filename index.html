@@ -6,17 +6,11 @@
   <meta name="description" content="ARTASAS - Immersive image gallery experience">
   <meta name="theme-color" content="#0a0a0f">
   <title>ARTASAS</title>
+  <link rel="icon" type="image/png" href="FAVICON.png">
   
   <style>
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    
-    :root {
-      --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     
     html, body {
       height: 100%;
@@ -36,10 +30,7 @@
       background-image: 
         radial-gradient(1px 1px at 20px 30px, rgba(255,255,255,0.3), transparent),
         radial-gradient(1px 1px at 40px 70px, rgba(255,255,255,0.2), transparent),
-        radial-gradient(1px 1px at 50px 160px, rgba(255,255,255,0.3), transparent),
-        radial-gradient(1px 1px at 90px 40px, rgba(255,255,255,0.2), transparent),
-        radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,0.3), transparent),
-        radial-gradient(1px 1px at 160px 120px, rgba(255,255,255,0.2), transparent);
+        radial-gradient(1px 1px at 50px 160px, rgba(255,255,255,0.3), transparent);
       background-repeat: repeat;
       background-size: 200px 200px;
       pointer-events: none;
@@ -48,35 +39,11 @@
     
     body:active { cursor: grabbing; }
 
-    /* Logo */
-    .logo {
-      position: fixed;
-      top: 24px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 100;
-      pointer-events: none;
-    }
-    
-    .logo img {
-      height: 17px;
-      width: auto;
-      opacity: 0.7;
-    }
+    .logo { position: fixed; top: 24px; left: 50%; transform: translateX(-50%); z-index: 100; pointer-events: none; }
+    .logo img { height: 17px; width: auto; opacity: 0.7; }
 
-    /* Gallery */
-    #gallery-container {
-      position: fixed;
-      inset: 0;
-      overflow: hidden;
-      background: #000;
-    }
-    
-    #gallery-canvas {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-    }
+    #gallery-container { position: fixed; inset: 0; overflow: hidden; background: #000; }
+    #gallery-canvas { position: fixed; inset: 0; pointer-events: none; }
     
     .gallery-item {
       position: fixed;
@@ -89,14 +56,63 @@
       will-change: left, top, width, height, opacity;
     }
     
-    .gallery-item img {
+    .gallery-item img { display: block; width: 100%; height: 100%; object-fit: cover; pointer-events: none; -webkit-user-drag: none; }
+    
+    .gallery-save-btn {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      padding: 6px 10px;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s, background 0.2s;
+      z-index: 10;
+    }
+    
+    .gallery-item:hover .gallery-save-btn { opacity: 1; }
+    .gallery-save-btn:hover { background: rgba(0, 0, 0, 0.8); }
+    
+    .gallery-save-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      margin-top: 4px;
+      min-width: 140px;
+      background: rgba(0, 0, 0, 0.9);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      padding: 6px 0;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-4px);
+      transition: all 0.2s;
+      z-index: 20;
+    }
+    
+    .gallery-save-btn:hover .gallery-save-dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
+    
+    .gallery-save-dropdown-item {
       display: block;
       width: 100%;
-      height: 100%;
-      object-fit: cover;
-      pointer-events: none;
-      -webkit-user-drag: none;
+      padding: 8px 14px;
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 12px;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.15s;
     }
+    
+    .gallery-save-dropdown-item:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
 
     /* Image Detail */
     .image-detail {
@@ -110,10 +126,7 @@
       transition: opacity 0.4s ease, visibility 0.4s ease;
     }
     
-    .image-detail.active {
-      opacity: 1;
-      visibility: visible;
-    }
+    .image-detail.active { opacity: 1; visibility: visible; }
     
     .detail-close {
       position: fixed;
@@ -133,10 +146,7 @@
       transition: all 0.3s ease;
     }
     
-    .detail-close:hover {
-      background: rgba(255, 255, 255, 0.12);
-      color: #fff;
-    }
+    .detail-close:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
     
     .detail-image-area {
       flex: 1;
@@ -155,6 +165,7 @@
       width: 100%;
       height: 100%;
       max-width: calc(100% - 100px);
+      perspective: 1000px;
     }
     
     .detail-image {
@@ -167,7 +178,12 @@
       border-radius: 12px;
       box-shadow: 0 40px 120px rgba(0, 0, 0, 0.6);
       margin: auto;
+      transition: transform 0.1s ease-out, box-shadow 0.3s ease;
+      transform-style: preserve-3d;
     }
+    
+    .detail-image:hover { box-shadow: 0 50px 140px rgba(0, 0, 0, 0.7); }
+    .detail-image.dragging { opacity: 0.7; cursor: grabbing; }
     
     .nav-arrow {
       position: absolute;
@@ -187,25 +203,12 @@
       z-index: 10;
     }
     
-    .nav-arrow:hover {
-      border-color: rgba(255, 255, 255, 0.5);
-      color: rgba(255, 255, 255, 0.9);
-      background: rgba(255, 255, 255, 0.05);
-    }
-    
+    .nav-arrow:hover { border-color: rgba(255, 255, 255, 0.5); color: rgba(255, 255, 255, 0.9); background: rgba(255, 255, 255, 0.05); }
     .nav-arrow svg { width: 20px; height: 20px; }
     .nav-arrow-left { left: 24px; }
     .nav-arrow-right { right: 24px; }
     
-    .image-counter {
-      position: absolute;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 11px;
-      color: rgba(255, 255, 255, 0.35);
-      letter-spacing: 0.15em;
-    }
+    .image-counter { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); font-size: 11px; color: rgba(255, 255, 255, 0.35); letter-spacing: 0.15em; }
 
     /* Sidebar */
     .detail-sidebar {
@@ -220,16 +223,9 @@
       gap: 32px;
     }
     
-    .section-title {
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.2em;
-      color: rgba(255, 255, 255, 0.35);
-    }
+    .section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.2em; color: rgba(255, 255, 255, 0.35); }
 
-    /* Colors */
     .color-palette { display: flex; flex-direction: column; gap: 14px; }
-    
     .color-swatches { display: flex; flex-wrap: wrap; gap: 8px; }
     
     .color-swatch {
@@ -246,43 +242,31 @@
     
     .color-hex {
       position: absolute;
-      bottom: -26px;
+      bottom: -24px;
       left: 50%;
       transform: translateX(-50%);
       font-size: 9px;
       font-family: 'SF Mono', Monaco, monospace;
-      letter-spacing: 0.02em;
-      color: rgba(255, 255, 255, 0.7);
       white-space: nowrap;
       opacity: 0;
-      transition: opacity 0.2s ease;
-      background: rgba(0, 0, 0, 0.9);
+      visibility: hidden;
+      transition: all 0.2s ease;
+      background: rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.7);
       padding: 3px 6px;
       border-radius: 3px;
+      pointer-events: none;
+      z-index: 100;
     }
     
-    .color-swatch:hover .color-hex { opacity: 1; }
+    .color-swatch:hover .color-hex { opacity: 1; visibility: visible; }
+    .color-hex.copied { background: rgba(255, 255, 255, 0.15); color: rgba(255, 255, 255, 0.9); }
 
-    /* Description */
     .detail-description { display: flex; flex-direction: column; gap: 12px; }
-    
-    .detail-description-text {
-      font-size: 14px;
-      line-height: 1.7;
-      color: rgba(255, 255, 255, 0.65);
-    }
-    
+    .detail-description-text { font-size: 14px; line-height: 1.7; color: rgba(255, 255, 255, 0.65); }
     .detail-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-    
-    .detail-tag {
-      padding: 5px 10px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 14px;
-      font-size: 11px;
-      color: rgba(255, 255, 255, 0.45);
-    }
+    .detail-tag { padding: 5px 10px; background: rgba(255, 255, 255, 0.05); border-radius: 14px; font-size: 11px; color: rgba(255, 255, 255, 0.45); }
 
-    /* Actions */
     .save-board-btn {
       display: flex;
       align-items: center;
@@ -298,50 +282,61 @@
       cursor: default;
     }
     
-    .save-board-btn.saved {
-      border-color: rgba(255, 255, 255, 0.6);
-      color: rgba(255, 255, 255, 0.9);
-    }
-    
+    .save-board-btn.saved { border-color: rgba(255, 255, 255, 0.6); color: rgba(255, 255, 255, 0.9); }
     .save-board-btn svg { width: 14px; height: 14px; }
 
-    /* Saved By */
     .saved-by { display: flex; flex-direction: column; gap: 12px; }
     .saved-by-users { display: flex; flex-wrap: wrap; gap: 8px; }
     
-    .saved-user {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 10px;
-      background: transparent;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 20px;
-    }
-    
-    .saved-user-avatar {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-    }
-    
+    .saved-user { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: transparent; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; }
+    .saved-user-link { text-decoration: none; cursor: pointer; transition: all 0.2s ease; }
+    .saved-user-link:hover { border-color: rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.05); }
+    .saved-user-avatar { width: 22px; height: 22px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3); }
     .saved-user-name { font-size: 11px; color: rgba(255, 255, 255, 0.6); }
-    
-    .saved-count {
+    .saved-count { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: rgba(255, 255, 255, 0.06); border-radius: 50%; font-size: 10px; color: rgba(255, 255, 255, 0.45); }
+
+    #color-canvas { display: none; }
+
+    /* Drag to Board Overlay */
+    .drag-boards-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 32px;
-      height: 32px;
-      background: rgba(255, 255, 255, 0.06);
-      border-radius: 50%;
-      font-size: 10px;
-      color: rgba(255, 255, 255, 0.45);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
     }
-
-    #color-canvas { display: none; }
+    
+    .drag-boards-overlay.active { opacity: 1; visibility: visible; }
+    .drag-boards-container { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; max-width: 800px; padding: 40px; }
+    
+    .drag-board-target {
+      width: 160px;
+      height: 100px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: rgba(255, 255, 255, 0.02);
+    }
+    
+    .drag-board-target:hover, .drag-board-target.hover { border-color: rgba(255, 255, 255, 0.4); background: rgba(255, 255, 255, 0.06); }
+    .drag-board-target.drop-success { border-color: rgba(255, 255, 255, 0.6); background: rgba(255, 255, 255, 0.1); }
+    .drag-board-name { font-size: 13px; font-weight: 500; color: rgba(255, 255, 255, 0.7); }
+    .drag-board-count { font-size: 10px; color: rgba(255, 255, 255, 0.35); }
+    .drag-hint { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); font-size: 11px; color: rgba(255, 255, 255, 0.35); z-index: 1001; opacity: 0; transition: opacity 0.3s; }
+    .drag-boards-overlay.active .drag-hint { opacity: 1; }
+    .drag-preview { position: fixed; pointer-events: none; z-index: 1002; opacity: 0.9; border-radius: 8px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); display: none; }
 
     /* Controls */
     .controls {
@@ -352,16 +347,55 @@
       z-index: 100;
       display: flex;
       align-items: center;
-      gap: 24px;
+      gap: 20px;
     }
     
-    .controls-help {
-      font-size: 11px;
-      color: rgba(255, 255, 255, 0.35);
-      letter-spacing: 0.02em;
-    }
-    
+    .controls-help { font-size: 11px; color: rgba(255, 255, 255, 0.35); letter-spacing: 0.02em; }
     .controls-help span { margin: 0 8px; color: rgba(255, 255, 255, 0.2); }
+    
+    .main-custom-wrapper { display: flex; align-items: center; gap: 8px; }
+    
+    .custom-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    
+    .custom-toggle:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.15); color: rgba(255, 255, 255, 0.8); }
+    .custom-toggle.active { background: rgba(255, 255, 255, 0.12); color: rgba(255, 255, 255, 0.9); }
+    
+    .custom-icon { display: flex; gap: 3px; align-items: center; }
+    .custom-icon span { width: 3px; height: 10px; background: currentColor; border-radius: 1px; opacity: 0.8; }
+    .custom-icon span:nth-child(2) { height: 14px; }
+    .custom-icon span:nth-child(3) { height: 6px; }
+    
+    .main-customization {
+      display: none;
+      align-items: center;
+      gap: 16px;
+      padding: 8px 14px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+    }
+    
+    .main-customization.active { display: flex; }
+    
+    .custom-group { display: flex; align-items: center; gap: 10px; }
+    .custom-label { font-size: 10px; color: rgba(255, 255, 255, 0.4); text-transform: uppercase; letter-spacing: 0.1em; }
+    .custom-slider { width: 80px; height: 4px; -webkit-appearance: none; background: rgba(255, 255, 255, 0.1); border-radius: 2px; cursor: pointer; }
+    .custom-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: rgba(255, 255, 255, 0.8); cursor: pointer; }
+    .custom-divider { width: 1px; height: 16px; background: rgba(255, 255, 255, 0.1); }
     
     .grid-toggle {
       display: flex;
@@ -379,30 +413,13 @@
       transition: all var(--transition);
     }
     
-    .grid-toggle:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.15);
-      color: rgba(255, 255, 255, 0.8);
-    }
-    
-    .grid-toggle.active {
-      background: rgba(255, 255, 255, 0.12);
-      color: rgba(255, 255, 255, 0.9);
-    }
+    .grid-toggle:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.15); color: rgba(255, 255, 255, 0.8); }
+    .grid-toggle.active { background: rgba(255, 255, 255, 0.12); color: rgba(255, 255, 255, 0.9); }
     
     .grid-icon { display: grid; grid-template-columns: repeat(2, 5px); gap: 2px; }
     .grid-icon span { width: 5px; height: 5px; background: currentColor; border-radius: 1px; opacity: 0.8; }
     
-    .zoom-indicator {
-      position: fixed;
-      bottom: 20px;
-      right: 24px;
-      z-index: 100;
-      font-size: 10px;
-      color: rgba(255, 255, 255, 0.3);
-      font-variant-numeric: tabular-nums;
-      letter-spacing: 0.05em;
-    }
+    .zoom-indicator { position: fixed; bottom: 20px; right: 24px; z-index: 100; font-size: 10px; color: rgba(255, 255, 255, 0.3); font-variant-numeric: tabular-nums; letter-spacing: 0.05em; }
 
     /* Grid View */
     .grid-view {
@@ -442,12 +459,7 @@
     }
     
     .grid-close.active { opacity: 1; visibility: visible; }
-    
-    .grid-close:hover {
-      background: rgba(255, 255, 255, 0.15);
-      color: rgba(255, 255, 255, 0.9);
-    }
-    
+    .grid-close:hover { background: rgba(255, 255, 255, 0.15); color: rgba(255, 255, 255, 0.9); }
     .grid-close svg { width: 14px; height: 14px; }
     
     .grid-view-content {
@@ -458,22 +470,129 @@
       margin: 0 auto;
     }
     
+    .grid-view-content.layout-1 { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+    .grid-view-content.layout-1 .grid-view-item { aspect-ratio: 1; }
+    
+    .grid-view-content.layout-2 { grid-template-columns: repeat(4, 1fr); }
+    .grid-view-content.layout-2 .grid-view-item { aspect-ratio: 1; }
+    .grid-view-content.layout-2 .grid-view-item:nth-child(5n+1) { grid-column: span 2; grid-row: span 2; }
+    
+    .grid-view-content.layout-3 { grid-template-columns: repeat(5, 1fr); }
+    .grid-view-content.layout-3 .grid-view-item { aspect-ratio: 1; }
+    .grid-view-content.layout-3 .grid-view-item:nth-child(6n+1) { grid-column: span 2; aspect-ratio: 2/1; }
+    .grid-view-content.layout-3 .grid-view-item:nth-child(8n+4) { grid-row: span 2; aspect-ratio: 1/2; }
+    
+    .grid-view-content.layout-4 { grid-template-columns: repeat(3, 1fr); grid-auto-rows: 200px; }
+    .grid-view-content.layout-4 .grid-view-item { aspect-ratio: auto; }
+    .grid-view-content.layout-4 .grid-view-item:nth-child(4n+1) { grid-column: span 2; grid-row: span 2; }
+    
     .grid-view-item {
+      position: relative;
       aspect-ratio: 1;
       border-radius: 4px;
-      overflow: hidden;
+      overflow: visible;
       cursor: pointer;
-      transition: transform var(--transition), box-shadow var(--transition);
       background: #111;
     }
     
-    .grid-view-item:hover {
-      transform: scale(1.03);
-      box-shadow: 0 15px 50px rgba(0, 0, 0, 0.6);
-      z-index: 1;
+    .grid-view-item img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
+    
+    .grid-save-btn {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      padding: 6px 10px;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 10;
     }
     
-    .grid-view-item img { width: 100%; height: 100%; object-fit: cover; }
+    .grid-view-item:hover .grid-save-btn { opacity: 1; }
+    
+    .save-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      margin-top: 4px;
+      min-width: 140px;
+      background: rgba(0, 0, 0, 0.9);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      padding: 6px 0;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-4px);
+      transition: all 0.2s;
+      z-index: 20;
+    }
+    
+    .grid-save-btn:hover .save-dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
+    
+    .save-dropdown-item {
+      display: block;
+      width: 100%;
+      padding: 8px 14px;
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 12px;
+      text-align: left;
+      cursor: pointer;
+    }
+    
+    .save-dropdown-item:hover { background: rgba(255, 255, 255, 0.1); }
+
+    /* Grid Customization */
+    .grid-customization {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 160;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 8px 16px;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .grid-customization.active { opacity: 1; visibility: visible; }
+    
+    .layout-switcher { display: flex; gap: 4px; }
+    
+    .layout-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      color: rgba(255, 255, 255, 0.35);
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .layout-btn:hover { color: rgba(255, 255, 255, 0.6); }
+    .layout-btn.active { color: rgba(255, 255, 255, 0.9); background: rgba(255, 255, 255, 0.1); }
 
     /* Loading */
     .loading {
@@ -508,26 +627,19 @@
       .detail-image { max-height: 50vh; }
       .nav-arrow-left { left: 10px; }
       .nav-arrow-right { right: 10px; }
-      .detail-sidebar {
-        width: 100%;
-        height: auto;
-        border-left: none;
-        border-top: 1px solid rgba(255, 255, 255, 0.06);
-        padding: 30px 20px;
-      }
+      .detail-sidebar { width: 100%; height: auto; border-left: none; border-top: 1px solid rgba(255, 255, 255, 0.06); padding: 30px 20px; }
     }
     
     @media (max-width: 768px) {
       .controls-help { display: none; }
+      .main-custom-wrapper { display: none !important; }
+      .home-switcher { display: none; }
       .grid-view { padding: 70px 16px 16px; }
-      .grid-view-content { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
-    }
-    
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        transition-duration: 0.01ms !important;
-        animation-duration: 0.01ms !important;
+      .grid-view-content, .grid-view-content.layout-1, .grid-view-content.layout-2, .grid-view-content.layout-3, .grid-view-content.layout-4 { 
+        grid-template-columns: repeat(2, 1fr); gap: 8px; 
       }
+      .grid-view-content .grid-view-item { grid-column: auto !important; grid-row: auto !important; aspect-ratio: 1 !important; }
+      .grid-customization { display: none; }
     }
   </style>
 </head>
@@ -540,9 +652,7 @@
   
   <div class="image-detail" id="image-detail">
     <button class="detail-close" id="detail-close">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M19 12H5M12 19l-7-7 7-7"/>
-      </svg>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
       Back
     </button>
     
@@ -580,9 +690,7 @@
       
       <div>
         <button class="save-board-btn" id="save-board-btn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-          </svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
           Save to Board
         </button>
       </div>
@@ -590,9 +698,9 @@
       <div class="saved-by">
         <div class="section-title">Also saved by</div>
         <div class="saved-by-users">
-          <div class="saved-user"><div class="saved-user-avatar"></div><span class="saved-user-name">@maria</span></div>
-          <div class="saved-user"><div class="saved-user-avatar"></div><span class="saved-user-name">@alex</span></div>
-          <div class="saved-user"><div class="saved-user-avatar"></div><span class="saved-user-name">@studio</span></div>
+          <div class="saved-user"><img class="saved-user-avatar" src="https://i.pravatar.cc/44?img=1" alt=""><span class="saved-user-name">@maria</span></div>
+          <a href="profile.html" class="saved-user saved-user-link"><img class="saved-user-avatar" src="https://i.pravatar.cc/44?img=3" alt=""><span class="saved-user-name">@alex</span></a>
+          <div class="saved-user"><img class="saved-user-avatar" src="https://i.pravatar.cc/44?img=5" alt=""><span class="saved-user-name">@studio</span></div>
           <div class="saved-count">+12</div>
         </div>
       </div>
@@ -600,6 +708,13 @@
   </div>
   
   <canvas id="color-canvas"></canvas>
+  
+  <!-- Drag to Board Overlay -->
+  <div class="drag-boards-overlay" id="drag-boards-overlay">
+    <div class="drag-boards-container" id="drag-boards-container"></div>
+    <div class="drag-hint">Drop on a board to save</div>
+  </div>
+  <img class="drag-preview" id="drag-preview" src="" alt="">
   
   <div class="grid-view" id="grid-view">
     <div class="grid-view-content" id="grid-content"></div>
@@ -610,11 +725,49 @@
     CLOSE
   </button>
   
+  <div class="grid-customization" id="grid-customization">
+    <div class="custom-group">
+      <span class="custom-label">Gap</span>
+      <input type="range" class="custom-slider" id="gap-slider" min="4" max="40" value="12">
+    </div>
+    <div class="custom-divider"></div>
+    <div class="custom-group">
+      <span class="custom-label">Size</span>
+      <input type="range" class="custom-slider" id="size-slider" min="150" max="350" value="220">
+    </div>
+    <div class="custom-divider"></div>
+    <div class="layout-switcher" id="layout-switcher">
+      <button class="layout-btn active" data-layout="1">1</button>
+      <button class="layout-btn" data-layout="2">2</button>
+      <button class="layout-btn" data-layout="3">3</button>
+      <button class="layout-btn" data-layout="4">4</button>
+    </div>
+  </div>
+  
   <div class="controls">
     <div class="controls-help">Drag to pan<span>·</span>Scroll to zoom<span>·</span>Click to view</div>
+    
+    <div class="main-custom-wrapper" id="main-custom-wrapper">
+      <button class="custom-toggle" id="custom-toggle">
+        <div class="custom-icon"><span></span><span></span><span></span></div>
+        CUSTOM
+      </button>
+      <div class="main-customization" id="main-customization">
+        <div class="custom-group">
+          <span class="custom-label">Size</span>
+          <input type="range" class="custom-slider" id="main-size-slider" min="100" max="400" value="220">
+        </div>
+        <div class="custom-divider"></div>
+        <div class="custom-group">
+          <span class="custom-label">Spread</span>
+          <input type="range" class="custom-slider" id="main-spread-slider" min="500" max="3000" value="2000">
+        </div>
+      </div>
+    </div>
+    
     <button class="grid-toggle" id="grid-toggle">
       <div class="grid-icon"><span></span><span></span><span></span><span></span></div>
-      GRID
+      GRIDS
     </button>
   </div>
   
@@ -622,23 +775,31 @@
   
   <script>
     const images = [
-      'logo.png', 'art.jpeg', '025ce04a-753c-4ac0-90fc-724966e35fa5.jpeg',
+      'logo.png', 'art.jpeg', 'TRUST.png',
+      '025ce04a-753c-4ac0-90fc-724966e35fa5.jpeg', '03cdbf2e8d84091b535378b6f3e28b7d.jpg',
       '04d800fd-d969-41e8-adf8-64ebf6eb37e1.jpeg', '16fab7bb-6495-4d45-b25d-494055a4b33c.jpeg',
-      '3df2bb29-8609-42d8-ac77-e68dbef4b475.jpeg', '6a8b2dc0-12fc-4ba3-aa31-aff359a761e8.jpeg',
+      '2a3335cdc27bdc677f89863667c354dc.jpg', '34170add96db0159709f82efb83f7c39.jpg',
+      '37e7433f65e6064acf64c1993810b0cf.jpg', '3df2bb29-8609-42d8-ac77-e68dbef4b475.jpeg',
+      '57cbd7bdd778d87b337dc1120769decb.jpg', '6a8b2dc0-12fc-4ba3-aa31-aff359a761e8.jpeg',
       '6e89fb39-3096-4e92-9f32-e6101f6ff825.jpeg', '6f53ae36-505b-440f-affe-0cc0cf9e8529.jpeg',
-      '71097654-382a-46ec-a3d4-2478ae087251.jpeg', 'acf8fea5-220f-445e-8785-2ddac7bf4640.jpeg',
-      'b54c9dba-2d38-4b15-b7b0-a2557faddfd5.jpeg', 'c2edbde2-2f5b-49f5-9349-174472851ef5.jpeg',
+      '71097654-382a-46ec-a3d4-2478ae087251.jpeg', '74d2981eb2e8400526272f86c55bc5d6.jpg',
+      '965d8b1dcc482979f0329b574cfd1108.jpg', '9d4b466353bc2ec699b8062a163db00c.jpg',
+      '9e297d9e1365fb44836fb54ea76fe408.jpg', 'a12121b22ebf2f3dce8adf5469439113.jpg',
+      'acf8fea5-220f-445e-8785-2ddac7bf4640.jpeg', 'adfa35385556cdca00bcfb6014cf8e77.jpg',
+      'b4a0ccf623676d6f3e889f1d4757ed4c.jpg', 'b54c9dba-2d38-4b15-b7b0-a2557faddfd5.jpeg',
+      'b77a8587faa5df05f683aa53ffb395f5.jpg', 'c2edbde2-2f5b-49f5-9349-174472851ef5.jpeg',
       'c9d73c80-5b88-4cb9-95c5-8e126dceb88b.jpeg', 'd85e35fb-751b-4344-8bf3-e4851c8ddd43.jpeg',
-      'e08063e1-19be-413f-9acc-10c3cced32f4.jpeg', 'e969743e-8178-498c-85b6-365b2a2080a5.jpeg',
-      'f0118967-4c43-4fd1-80a7-a4d855a14f2c.jpeg', 'f6c59438-1a4a-47f2-a093-fe18e1bad0da.jpeg',
+      'e08063e1-19be-413f-9acc-10c3cced32f4.jpeg', 'e791c2d7cc6d7d583763189e0e8c4fc7.jpg',
+      'e79b0b372fc86ae378931ecd65d4a9f6.jpg', 'e969743e-8178-498c-85b6-365b2a2080a5.jpeg',
+      'ee8684761fe56f1891ac18dc859623c0.jpg', 'f0118967-4c43-4fd1-80a7-a4d855a14f2c.jpeg',
+      'f6c59438-1a4a-47f2-a093-fe18e1bad0da.jpeg', 'fe29348e36a36c2c99edb58821330c79.jpg',
       'FJanx6YWYAo8KW9.jpeg', 'G__9DIUbcAAt_cy.jpeg', 'G__MaODbEAQ7Rn3.jpeg',
       'G_6ATQ2XoAA95dV.jpeg', 'G_758bdWwAATy_9.jpeg', 'G_Cw8iBW0AAcDiV.jpeg',
       'G_NWn8FaIAEO25I.jpeg', 'G_vet9yWcAARLKT.jpeg', 'G046ZVHWkAABcQ1.jpeg',
       'G06JwjsWQAAw4Y5.jpeg', 'G2naqcabIAEp8jE.jpeg', 'G36PhxlWcAAxPr5.jpeg',
       'G5BFNOzWYAAuMHi.jpeg', 'G8lehBTW8AA6C5u.jpeg', 'G93cWkQXcAAXPcr.jpeg',
       'GLnfiyfWQAItm-O.jpeg', 'Gz7G_5rXEAAc7mt.jpeg', 'GzHnXerWoAAp5lI.jpeg',
-      'HAD4TeTbAAA7suu.jpeg', 'HAE4mByWMAAAzbd.jpeg', 'HAGeCV-XkAAVCu2.jpeg',
-      'LOGO - cópia.png', 'TRUST.png'
+      'HAD4TeTbAAA7suu.jpeg', 'HAE4mByWMAAAzbd.jpeg', 'HAGeCV-XkAAVCu2.jpeg', 'HAOPIy1WAAA-j5X.jpeg'
     ].map(src => ({ src, label: 'artasas' }));
 
     class Gallery {
@@ -658,11 +819,11 @@
         
         this.savedImages = new Set();
         this.currentImageIndex = 0;
+        this.currentHome = 1;
         this.imageData = [];
         this.items = [];
         this.isGridView = false;
         
-        // Camera
         this.cameraZ = 0;
         this.targetCameraZ = 0;
         this.panX = 0;
@@ -672,13 +833,11 @@
         this.velX = 0;
         this.velY = 0;
         
-        // Drag
         this.isDragging = false;
         this.dragStarted = false;
         this.lastX = 0;
         this.lastY = 0;
         
-        // Settings
         this.friction = 0.92;
         this.ease = 0.08;
         this.zEase = 0.06;
@@ -688,20 +847,43 @@
         this.minZ = -500;
         this.maxZ = this.spaceDepth + 500;
         this.fov = 800;
+        this.baseSize = 220;
+        this.spreadMultiplier = 1;
         
         this.init();
       }
       
       async init() {
-        await this.loadImages();
+        await this.loadImages(images);
         this.createGalleryItems();
         this.createGridView();
         this.setupEvents();
+        this.setupLayoutSwitcher();
+        this.setupMainCustomization();
+        this.setupHomeSwitcher();
+        this.setupDragToBoard();
+        this.setGridLayout('1');
         this.animate();
         setTimeout(() => this.loading.classList.add('hidden'), 500);
+        
+        // Check for URL parameter to open image detail
+        this.checkUrlParams();
       }
       
-      async loadImages() {
+      checkUrlParams() {
+        const params = new URLSearchParams(window.location.search);
+        const imageSrc = params.get('image');
+        if (imageSrc) {
+          const imgData = this.imageData.find(img => img.src === imageSrc);
+          if (imgData) {
+            setTimeout(() => this.openDetail(imgData), 600);
+          }
+          // Clean URL without reload
+          window.history.replaceState({}, '', window.location.pathname);
+        }
+      }
+      
+      async loadImages(images) {
         this.imageData = await Promise.all(images.map(img => 
           new Promise(resolve => {
             const image = new Image();
@@ -713,13 +895,17 @@
       }
       
       createGalleryItems() {
+        this.canvas.innerHTML = '';
+        this.items = [];
         const total = this.imageData.length;
+        const boards = ['Inspiration', 'References', 'Favorites'];
         
         this.imageData.forEach((imgData, index) => {
           const item = document.createElement('div');
           item.className = 'gallery-item';
           
-          const baseSize = 180 + Math.random() * 150;
+          const sizeVariation = Math.random();
+          const baseSize = 180 + sizeVariation * 150;
           const ratio = imgData.width / imgData.height;
           const w = ratio > 1 ? baseSize : baseSize * ratio;
           const h = ratio > 1 ? baseSize / ratio : baseSize;
@@ -731,35 +917,135 @@
           img.src = imgData.src;
           img.alt = imgData.label;
           img.draggable = false;
-          
           item.appendChild(img);
-          item.addEventListener('click', () => !this.dragStarted && this.openDetail(imgData));
+          
+          // Save button
+          const saveBtn = document.createElement('button');
+          saveBtn.className = 'gallery-save-btn';
+          saveBtn.textContent = 'Save';
+          saveBtn.addEventListener('click', (e) => e.stopPropagation());
+          item.appendChild(saveBtn);
+          
+          // Dropdown
+          const dropdown = document.createElement('div');
+          dropdown.className = 'gallery-save-dropdown';
+          boards.forEach(board => {
+            const boardBtn = document.createElement('button');
+            boardBtn.className = 'gallery-save-dropdown-item';
+            boardBtn.textContent = board;
+            boardBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              this.saveToGalleryBoard(imgData, board, saveBtn);
+            });
+            dropdown.appendChild(boardBtn);
+          });
+          saveBtn.appendChild(dropdown);
+          
+          item.addEventListener('click', (e) => {
+            if (!this.dragStarted && !e.target.closest('.gallery-save-btn')) {
+              this.openDetail(imgData);
+            }
+          });
           this.canvas.appendChild(item);
+          
+          const baseX = (Math.random() - 0.5) * this.spaceWidth;
+          const baseY = (Math.random() - 0.5) * this.spaceHeight;
           
           this.items.push({ 
             el: item,
-            x: (Math.random() - 0.5) * this.spaceWidth,
-            y: (Math.random() - 0.5) * this.spaceHeight,
+            x: baseX,
+            y: baseY,
+            baseX: baseX,
+            baseY: baseY,
             z: (index / total) * this.spaceDepth + (Math.random() - 0.5) * 300,
             width: w,
-            height: h
+            height: h,
+            originalWidth: imgData.width,
+            originalHeight: imgData.height,
+            sizeVariation: sizeVariation
           });
         });
         
         this.items.sort((a, b) => b.z - a.z);
       }
       
+      saveToGalleryBoard(imgData, board, btn) {
+        btn.textContent = 'Saved';
+        setTimeout(() => {
+          btn.textContent = 'Save';
+          const dropdown = document.createElement('div');
+          dropdown.className = 'gallery-save-dropdown';
+          ['Inspiration', 'References', 'Favorites'].forEach(b => {
+            const boardBtn = document.createElement('button');
+            boardBtn.className = 'gallery-save-dropdown-item';
+            boardBtn.textContent = b;
+            boardBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              this.saveToGalleryBoard(imgData, b, btn);
+            });
+            dropdown.appendChild(boardBtn);
+          });
+          btn.appendChild(dropdown);
+        }, 1500);
+      }
+      
       createGridView() {
-        this.imageData.forEach(imgData => {
-          const item = document.createElement('div');
-          item.className = 'grid-view-item';
-          const img = document.createElement('img');
-          img.src = imgData.src;
-          img.alt = imgData.label;
-          item.appendChild(img);
-          item.addEventListener('click', () => this.openDetail(imgData));
-          this.gridContent.appendChild(item);
-        });
+        this.gridContent.innerHTML = '';
+        this.boards = ['Inspiration', 'References', 'Favorites'];
+        
+        this.imageData
+          .filter(imgData => imgData.src !== 'logo.png')
+          .forEach(imgData => {
+            const item = document.createElement('div');
+            item.className = 'grid-view-item';
+            
+            const img = document.createElement('img');
+            img.src = imgData.src;
+            img.alt = imgData.label;
+            img.addEventListener('click', () => this.openDetail(imgData));
+            item.appendChild(img);
+            
+            const saveBtn = document.createElement('button');
+            saveBtn.className = 'grid-save-btn';
+            saveBtn.textContent = 'Save';
+            
+            const dropdown = document.createElement('div');
+            dropdown.className = 'save-dropdown';
+            this.boards.forEach(board => {
+              const boardBtn = document.createElement('button');
+              boardBtn.className = 'save-dropdown-item';
+              boardBtn.textContent = board;
+              boardBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.saveToBoard(imgData, board, saveBtn);
+              });
+              dropdown.appendChild(boardBtn);
+            });
+            saveBtn.appendChild(dropdown);
+            item.appendChild(saveBtn);
+            
+            this.gridContent.appendChild(item);
+          });
+      }
+      
+      saveToBoard(imgData, board, btn) {
+        btn.textContent = 'Saved';
+        setTimeout(() => {
+          btn.textContent = 'Save';
+          const dropdown = document.createElement('div');
+          dropdown.className = 'save-dropdown';
+          this.boards.forEach(b => {
+            const boardBtn = document.createElement('button');
+            boardBtn.className = 'save-dropdown-item';
+            boardBtn.textContent = b;
+            boardBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              this.saveToBoard(imgData, b, btn);
+            });
+            dropdown.appendChild(boardBtn);
+          });
+          btn.appendChild(dropdown);
+        }, 1500);
       }
       
       setupEvents() {
@@ -792,17 +1078,153 @@
         this.gridToggle.addEventListener('click', () => this.toggleGrid());
         document.getElementById('grid-close').addEventListener('click', () => this.toggleGrid());
         
+        // 3D tilt effect on detail image
+        this.detailImage.addEventListener('mousemove', (e) => {
+          if (!this.isDraggingToBoard) this.handleImageTilt(e);
+        });
+        this.detailImage.addEventListener('mouseleave', () => this.resetImageTilt());
+        
         document.addEventListener('keydown', e => {
           if (e.key === 'Escape') {
             if (this.imageDetail.classList.contains('active')) this.closeDetail();
             else if (this.isGridView) this.toggleGrid();
           }
-          if (e.key === 'g' || e.key === 'G') this.toggleGrid();
           if (this.imageDetail.classList.contains('active')) {
             if (e.key === 'ArrowLeft') this.navigateImage(-1);
             if (e.key === 'ArrowRight') this.navigateImage(1);
           }
         });
+      }
+      
+      handleImageTilt(e) {
+        const rect = this.detailImage.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        
+        const rotateX = ((y - centerY) / centerY) * -18;
+        const rotateY = ((x - centerX) / centerX) * 18;
+        const shadowX = rotateY * 3;
+        const shadowY = rotateX * -3;
+        
+        this.detailImage.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`;
+        this.detailImage.style.boxShadow = `${shadowX}px ${40 + shadowY}px 120px rgba(0, 0, 0, 0.7)`;
+      }
+      
+      resetImageTilt() {
+        this.detailImage.style.transform = 'rotateX(0deg) rotateY(0deg) scale(1)';
+        this.detailImage.style.boxShadow = '0 40px 120px rgba(0, 0, 0, 0.6)';
+      }
+      
+      setupDragToBoard() {
+        this.isDraggingToBoard = false;
+        this.dragOverlay = document.getElementById('drag-boards-overlay');
+        this.dragPreview = document.getElementById('drag-preview');
+        this.dragBoardsContainer = document.getElementById('drag-boards-container');
+        this.dragStartPos = { x: 0, y: 0 };
+        
+        this.detailImage.addEventListener('mousedown', (e) => this.startDragToBoard(e));
+        document.addEventListener('mousemove', (e) => this.onDragToBoard(e));
+        document.addEventListener('mouseup', (e) => this.endDragToBoard(e));
+        
+        this.createBoardTargets();
+      }
+      
+      createBoardTargets() {
+        const boardsData = [
+          { name: 'Inspiration', count: 24 },
+          { name: 'References', count: 18 },
+          { name: 'Favorites', count: 42 },
+          { name: '+ New Board', count: 0 }
+        ];
+        
+        this.dragBoardsContainer.innerHTML = '';
+        
+        boardsData.forEach(board => {
+          const target = document.createElement('div');
+          target.className = 'drag-board-target';
+          target.dataset.board = board.name.replace('+ ', '');
+          target.innerHTML = `
+            <div class="drag-board-name">${board.name}</div>
+            ${board.count > 0 ? `<div class="drag-board-count">${board.count}</div>` : ''}
+          `;
+          target.addEventListener('mouseenter', () => target.classList.add('hover'));
+          target.addEventListener('mouseleave', () => target.classList.remove('hover'));
+          this.dragBoardsContainer.appendChild(target);
+        });
+      }
+      
+      startDragToBoard(e) {
+        if (!this.imageDetail.classList.contains('active')) return;
+        e.preventDefault();
+        this.dragStartPos = { x: e.clientX, y: e.clientY };
+        this.potentialDrag = true;
+      }
+      
+      onDragToBoard(e) {
+        if (!this.potentialDrag && !this.isDraggingToBoard) return;
+        
+        const dx = e.clientX - this.dragStartPos.x;
+        const dy = e.clientY - this.dragStartPos.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (this.potentialDrag && distance > 20) {
+          this.potentialDrag = false;
+          this.isDraggingToBoard = true;
+          this.detailImage.classList.add('dragging');
+          this.dragOverlay.classList.add('active');
+          this.resetImageTilt();
+          
+          this.dragPreview.src = this.currentImage.src;
+          this.dragPreview.style.width = '120px';
+          this.dragPreview.style.display = 'block';
+        }
+        
+        if (this.isDraggingToBoard) {
+          this.dragPreview.style.left = (e.clientX - 60) + 'px';
+          this.dragPreview.style.top = (e.clientY - 60) + 'px';
+        }
+      }
+      
+      endDragToBoard(e) {
+        this.potentialDrag = false;
+        if (!this.isDraggingToBoard) return;
+        
+        const target = document.elementFromPoint(e.clientX, e.clientY);
+        const boardTarget = target?.closest('.drag-board-target');
+        
+        if (boardTarget) {
+          const boardName = boardTarget.dataset.board;
+          boardTarget.classList.add('drop-success');
+          setTimeout(() => {
+            boardTarget.classList.remove('drop-success');
+            this.closeDragOverlay();
+            this.showSaveConfirmation(boardName);
+          }, 300);
+        } else {
+          this.closeDragOverlay();
+        }
+      }
+      
+      closeDragOverlay() {
+        this.isDraggingToBoard = false;
+        this.detailImage.classList.remove('dragging');
+        this.dragOverlay.classList.remove('active');
+        this.dragPreview.style.display = 'none';
+      }
+      
+      showSaveConfirmation(boardName) {
+        const originalText = this.saveBoardBtn.innerHTML;
+        this.saveBoardBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          Saved to ${boardName}
+        `;
+        this.saveBoardBtn.style.borderColor = 'rgba(255, 255, 255, 0.4)';
+        setTimeout(() => {
+          this.saveBoardBtn.innerHTML = originalText;
+          this.saveBoardBtn.style.borderColor = '';
+        }, 2000);
       }
       
       onDown(px, py) {
@@ -913,7 +1335,7 @@
       
       extractColors(img) {
         const ctx = this.colorCanvas.getContext('2d');
-        const size = 150;
+        const size = 80;
         this.colorCanvas.width = size;
         this.colorCanvas.height = size;
         ctx.drawImage(img, 0, 0, size, size);
@@ -923,9 +1345,9 @@
         for (let i = 0; i < data.length; i += 4) {
           const r = data[i], g = data[i + 1], b = data[i + 2];
           const brightness = (r + g + b) / 3;
-          if (brightness < 15 || brightness > 245) continue;
+          if (brightness < 20 || brightness > 240) continue;
           
-          const key = `${Math.round(r / 16) * 16},${Math.round(g / 16) * 16},${Math.round(b / 16) * 16}`;
+          const key = `${Math.round(r / 32) * 32},${Math.round(g / 32) * 32},${Math.round(b / 32) * 32}`;
           if (!colorMap[key]) colorMap[key] = { count: 0, r: 0, g: 0, b: 0 };
           colorMap[key].count++;
           colorMap[key].r += r;
@@ -935,16 +1357,14 @@
         
         const sorted = Object.values(colorMap)
           .map(c => ({ r: Math.round(c.r / c.count), g: Math.round(c.g / c.count), b: Math.round(c.b / c.count), count: c.count }))
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 30);
+          .sort((a, b) => b.count - a.count);
         
         const distinct = [];
         for (const color of sorted) {
-          const isDup = distinct.some(c => Math.abs(c.r - color.r) < 25 && Math.abs(c.g - color.g) < 25 && Math.abs(c.b - color.b) < 25);
-          if (!isDup && distinct.length < 10) distinct.push(color);
+          const isDup = distinct.some(c => Math.abs(c.r - color.r) < 50 && Math.abs(c.g - color.g) < 50 && Math.abs(c.b - color.b) < 50);
+          if (!isDup && distinct.length < 5) distinct.push(color);
         }
         
-        distinct.sort((a, b) => Math.atan2(Math.sqrt(3) * (a.g - a.b), 2 * a.r - a.g - a.b) - Math.atan2(Math.sqrt(3) * (b.g - b.b), 2 * b.r - b.g - b.b));
         this.displayColors(distinct);
       }
       
@@ -955,16 +1375,16 @@
           const swatch = document.createElement('div');
           swatch.className = 'color-swatch';
           swatch.style.background = `rgb(${color.r}, ${color.g}, ${color.b})`;
-          const textColor = (0.299 * color.r + 0.587 * color.g + 0.114 * color.b) / 255 > 0.5 ? '#000' : '#fff';
-          swatch.innerHTML = `<span class="color-hex" style="color: ${textColor}">${hex}</span>`;
+          swatch.innerHTML = `<span class="color-hex">${hex}</span>`;
           swatch.addEventListener('click', () => {
             navigator.clipboard.writeText(hex);
-            swatch.querySelector('.color-hex').textContent = 'Copied!';
-            swatch.querySelector('.color-hex').style.opacity = '1';
+            const hexEl = swatch.querySelector('.color-hex');
+            hexEl.textContent = 'copied';
+            hexEl.classList.add('copied');
             setTimeout(() => {
-              swatch.querySelector('.color-hex').textContent = hex;
-              swatch.querySelector('.color-hex').style.opacity = '';
-            }, 1000);
+              hexEl.textContent = hex;
+              hexEl.classList.remove('copied');
+            }, 1200);
           });
           this.colorSwatches.appendChild(swatch);
         });
@@ -997,7 +1417,104 @@
         this.gridView.classList.toggle('active', this.isGridView);
         this.gridToggle.classList.toggle('active', this.isGridView);
         document.getElementById('grid-close').classList.toggle('active', this.isGridView);
+        document.getElementById('grid-customization').classList.toggle('active', this.isGridView);
+        document.getElementById('main-custom-wrapper').style.display = this.isGridView ? 'none' : 'flex';
         document.body.style.cursor = this.isGridView ? 'default' : 'grab';
+      }
+      
+      setupLayoutSwitcher() {
+        const buttons = document.querySelectorAll('.layout-btn');
+        buttons.forEach(btn => {
+          btn.addEventListener('click', () => {
+            const layout = btn.dataset.layout;
+            this.setGridLayout(layout);
+            buttons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+          });
+        });
+        
+        document.getElementById('gap-slider').addEventListener('input', (e) => {
+          this.gridContent.style.gap = e.target.value + 'px';
+        });
+        
+        document.getElementById('size-slider').addEventListener('input', (e) => {
+          this.gridContent.style.gridTemplateColumns = `repeat(auto-fill, minmax(${e.target.value}px, 1fr))`;
+        });
+      }
+      
+      setGridLayout(layout) {
+        this.gridContent.className = 'grid-view-content layout-' + layout;
+        this.gridContent.style.gap = '';
+        this.gridContent.style.gridTemplateColumns = '';
+        document.getElementById('gap-slider').value = 12;
+        document.getElementById('size-slider').value = 220;
+      }
+      
+      setupMainCustomization() {
+        const toggleBtn = document.getElementById('custom-toggle');
+        const panel = document.getElementById('main-customization');
+        toggleBtn.addEventListener('click', () => {
+          panel.classList.toggle('active');
+          toggleBtn.classList.toggle('active');
+        });
+        
+        document.getElementById('main-size-slider').addEventListener('input', (e) => {
+          this.baseSize = parseInt(e.target.value);
+          this.updateItemSizes();
+        });
+        
+        document.getElementById('main-spread-slider').addEventListener('input', (e) => {
+          const spread = parseInt(e.target.value);
+          this.spreadMultiplier = spread / 2000;
+          this.updateItemPositions();
+        });
+      }
+      
+      updateItemSizes() {
+        this.items.forEach(item => {
+          const ratio = item.originalWidth / item.originalHeight;
+          const baseSize = this.baseSize + (item.sizeVariation * 150);
+          item.width = ratio > 1 ? baseSize : baseSize * ratio;
+          item.height = ratio > 1 ? baseSize / ratio : baseSize;
+        });
+      }
+      
+      updateItemPositions() {
+        this.items.forEach(item => {
+          item.x = item.baseX * this.spreadMultiplier;
+          item.y = item.baseY * this.spreadMultiplier;
+        });
+      }
+      
+      setupHomeSwitcher() {
+        const buttons = document.querySelectorAll('.home-btn');
+        buttons.forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const home = parseInt(btn.dataset.home);
+            if (home === this.currentHome) return;
+            
+            this.currentHome = home;
+            buttons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            this.loading.classList.remove('hidden');
+            
+            const images = home === 1 ? home1Images : home2Images;
+            await this.loadImages(images);
+            this.createGalleryItems();
+            this.createGridView();
+            
+            // Reset camera
+            this.cameraZ = 0;
+            this.targetCameraZ = 0;
+            this.panX = 0;
+            this.panY = 0;
+            this.targetPanX = 0;
+            this.targetPanY = 0;
+            
+            setTimeout(() => this.loading.classList.add('hidden'), 300);
+          });
+        });
       }
     }
     
