@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="ARTASAS - Your Creative Space">
+  <meta name="theme-color" content="#0a0a0f">
+  <title>Home — ARTASAS</title>
+  <link rel="icon" type="image/png" href="FAVICON.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    
+    html, body {
+      min-height: 100%;
+      background: #000;
+      color: #e0e0e0;
+      font-family: 'Work Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    /* Top Navigation Bar */
+    .top-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: rgba(0, 0, 0, 0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 1000;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      margin-right: 16px;
+    }
+
+    .nav-logo img {
+      height: 24px;
+      width: auto;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .nav-link {
+      position: relative;
+      padding: 10px 16px;
+      font-size: 15px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.6);
+      text-decoration: none;
+      border-radius: 24px;
+      transition: all 0.2s ease;
+    }
+
+    .nav-link:hover {
+      color: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .nav-link.active {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-link .badge {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      width: 8px;
+      height: 8px;
+      background: #e60023;
+      border-radius: 50%;
+    }
+
+    /* Search Bar */
+    .nav-center {
+      flex: 1;
+      max-width: 600px;
+      margin: 0 24px;
+    }
+
+    .search-container {
+      position: relative;
+      width: 100%;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 14px 50px 14px 48px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 24px;
+      font-size: 15px;
+      color: #fff;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .search-input::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .search-input:focus {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255, 255, 255, 0.4);
+      pointer-events: none;
+    }
+
+    .search-icon svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .search-actions {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .search-action-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      border-radius: 50%;
+      color: rgba(255, 255, 255, 0.5);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .search-action-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .search-action-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Right Side */
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .create-btn {
+      padding: 12px 20px;
+      background: #e60023;
+      border: none;
+      border-radius: 24px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .create-btn:hover {
+      background: #ad081b;
+    }
+
+    .nav-icon-btn {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      border-radius: 50%;
+      color: rgba(255, 255, 255, 0.6);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .nav-icon-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .nav-icon-btn svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .user-avatar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px;
+      background: transparent;
+      border: none;
+      border-radius: 24px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .user-avatar:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .user-avatar img {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .user-avatar .dropdown-arrow {
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .user-avatar .dropdown-arrow svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Main Content */
+    .main-content {
+      padding-top: 80px;
+      min-height: 100vh;
+    }
+
+    /* Feed Grid */
+    .feed-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .feed-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .feed-item {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #111;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .feed-item:hover {
+      transform: translateY(-4px);
+    }
+
+    .feed-item img {
+      width: 100%;
+      display: block;
+      object-fit: cover;
+    }
+
+    .feed-item-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(transparent 50%, rgba(0,0,0,0.6));
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .feed-item:hover .feed-item-overlay {
+      opacity: 1;
+    }
+
+    .feed-save-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      padding: 10px 16px;
+      background: #e60023;
+      border: none;
+      border-radius: 24px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: all 0.2s ease;
+    }
+
+    .feed-item:hover .feed-save-btn {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .feed-save-btn:hover {
+      background: #ad081b;
+    }
+
+    .feed-item-info {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .feed-item:hover .feed-item-info {
+      opacity: 1;
+    }
+
+    .feed-author {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .feed-author img {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .top-nav {
+        padding: 0 12px;
+        height: 56px;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .nav-center {
+        margin: 0 12px;
+      }
+
+      .search-input {
+        padding: 12px 44px 12px 44px;
+        font-size: 14px;
+      }
+
+      .create-btn {
+        padding: 10px 16px;
+        font-size: 14px;
+      }
+
+      .nav-icon-btn {
+        width: 40px;
+        height: 40px;
+      }
+
+      .feed-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+
+      .feed-container {
+        padding: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Top Navigation Bar -->
+  <nav class="top-nav">
+    <div class="nav-left">
+      <a href="index.html" class="nav-logo">
+        <img src="logo.png" alt="ARTASAS">
+      </a>
+      <div class="nav-links">
+        <a href="#" class="nav-link active">For You</a>
+        <a href="#" class="nav-link">
+          Following
+          <span class="badge"></span>
+        </a>
+        <a href="#" class="nav-link">Explore</a>
+        <a href="#" class="nav-link">Shop</a>
+      </div>
+    </div>
+
+    <div class="nav-center">
+      <div class="search-container">
+        <div class="search-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+        </div>
+        <input type="text" class="search-input" placeholder="Try 'b&w film photography'">
+        <div class="search-actions">
+          <button class="search-action-btn" title="Camera search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="5" width="18" height="14" rx="2"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-right">
+      <button class="create-btn">Create</button>
+      <button class="nav-icon-btn" title="Notifications">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+      </button>
+      <button class="nav-icon-btn" title="Messages">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+      </button>
+      <button class="user-avatar">
+        <img src="https://i.pravatar.cc/56?img=3" alt="User">
+        <span class="dropdown-arrow">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M7 10l5 5 5-5z"/>
+          </svg>
+        </span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="feed-container">
+      <div class="feed-grid" id="feed-grid"></div>
+    </div>
+  </main>
+
+  <script>
+    const images = [
+      '025ce04a-753c-4ac0-90fc-724966e35fa5.jpeg', '03cdbf2e8d84091b535378b6f3e28b7d.jpg',
+      '04d800fd-d969-41e8-adf8-64ebf6eb37e1.jpeg', '16fab7bb-6495-4d45-b25d-494055a4b33c.jpeg',
+      '2a3335cdc27bdc677f89863667c354dc.jpg', '34170add96db0159709f82efb83f7c39.jpg',
+      '37e7433f65e6064acf64c1993810b0cf.jpg', '3df2bb29-8609-42d8-ac77-e68dbef4b475.jpeg',
+      '57cbd7bdd778d87b337dc1120769decb.jpg', '6a8b2dc0-12fc-4ba3-aa31-aff359a761e8.jpeg',
+      '6e89fb39-3096-4e92-9f32-e6101f6ff825.jpeg', '6f53ae36-505b-440f-affe-0cc0cf9e8529.jpeg',
+      '71097654-382a-46ec-a3d4-2478ae087251.jpeg', '74d2981eb2e8400526272f86c55bc5d6.jpg',
+      '965d8b1dcc482979f0329b574cfd1108.jpg', '9d4b466353bc2ec699b8062a163db00c.jpg',
+      '9e297d9e1365fb44836fb54ea76fe408.jpg', 'a12121b22ebf2f3dce8adf5469439113.jpg',
+      'acf8fea5-220f-445e-8785-2ddac7bf4640.jpeg', 'adfa35385556cdca00bcfb6014cf8e77.jpg',
+      'art.jpeg', 'b4a0ccf623676d6f3e889f1d4757ed4c.jpg',
+      'b54c9dba-2d38-4b15-b7b0-a2557faddfd5.jpeg', 'b77a8587faa5df05f683aa53ffb395f5.jpg',
+      'c2edbde2-2f5b-49f5-9349-174472851ef5.jpeg', 'c9d73c80-5b88-4cb9-95c5-8e126dceb88b.jpeg',
+      'd85e35fb-751b-4344-8bf3-e4851c8ddd43.jpeg', 'e08063e1-19be-413f-9acc-10c3cced32f4.jpeg',
+      'e791c2d7cc6d7d583763189e0e8c4fc7.jpg', 'e79b0b372fc86ae378931ecd65d4a9f6.jpg',
+      'e969743e-8178-498c-85b6-365b2a2080a5.jpeg', 'ee8684761fe56f1891ac18dc859623c0.jpg',
+      'f0118967-4c43-4fd1-80a7-a4d855a14f2c.jpeg', 'f6c59438-1a4a-47f2-a093-fe18e1bad0da.jpeg',
+      'fe29348e36a36c2c99edb58821330c79.jpg', 'FJanx6YWYAo8KW9.jpeg',
+      'G__9DIUbcAAt_cy.jpeg', 'G__MaODbEAQ7Rn3.jpeg', 'G_6ATQ2XoAA95dV.jpeg',
+      'G_758bdWwAATy_9.jpeg', 'G_Cw8iBW0AAcDiV.jpeg', 'G_NWn8FaIAEO25I.jpeg',
+      'G_vet9yWcAARLKT.jpeg', 'G046ZVHWkAABcQ1.jpeg', 'G06JwjsWQAAw4Y5.jpeg',
+      'G2naqcabIAEp8jE.jpeg', 'G36PhxlWcAAxPr5.jpeg', 'G5BFNOzWYAAuMHi.jpeg',
+      'G8lehBTW8AA6C5u.jpeg', 'G93cWkQXcAAXPcr.jpeg', 'GLnfiyfWQAItm-O.jpeg',
+      'Gz7G_5rXEAAc7mt.jpeg', 'GzHnXerWoAAp5lI.jpeg', 'HAD4TeTbAAA7suu.jpeg',
+      'HAE4mByWMAAAzbd.jpeg', 'HAGeCV-XkAAVCu2.jpeg', 'HAOPIy1WAAA-j5X.jpeg', 'TRUST.png'
+    ];
+
+    const authors = [
+      { name: 'Alex', avatar: 'https://i.pravatar.cc/56?img=3' },
+      { name: 'Jaime Siux', avatar: 'https://i.pravatar.cc/56?img=1' },
+      { name: 'Pame', avatar: 'https://i.pravatar.cc/56?img=5' },
+      { name: 'Studio', avatar: 'https://i.pravatar.cc/56?img=8' },
+      { name: 'Creative Co', avatar: 'https://i.pravatar.cc/56?img=12' }
+    ];
+
+    const feedGrid = document.getElementById('feed-grid');
+
+    // Shuffle images for variety
+    const shuffledImages = [...images].sort(() => Math.random() - 0.5);
+
+    shuffledImages.forEach((src, index) => {
+      const author = authors[index % authors.length];
+      
+      const item = document.createElement('div');
+      item.className = 'feed-item';
+      item.innerHTML = `
+        <img src="${src}" alt="Image" loading="lazy">
+        <div class="feed-item-overlay"></div>
+        <button class="feed-save-btn">Save</button>
+        <div class="feed-item-info">
+          <div class="feed-author">
+            <img src="${author.avatar}" alt="${author.name}">
+            <span>${author.name}</span>
+          </div>
+        </div>
+      `;
+
+      item.addEventListener('click', (e) => {
+        if (!e.target.closest('.feed-save-btn')) {
+          window.location.href = `index.html?image=${encodeURIComponent(src)}`;
+        }
+      });
+
+      const saveBtn = item.querySelector('.feed-save-btn');
+      saveBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        saveBtn.textContent = 'Saved!';
+        saveBtn.style.background = '#111';
+        setTimeout(() => {
+          saveBtn.textContent = 'Save';
+          saveBtn.style.background = '';
+        }, 1500);
+      });
+
+      feedGrid.appendChild(item);
+    });
+
+    // Nav links active state
+    document.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>
