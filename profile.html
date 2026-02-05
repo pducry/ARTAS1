@@ -7,6 +7,9 @@
   <meta name="theme-color" content="#0a0a0f">
   <title>Alex — ARTASAS</title>
   <link rel="icon" type="image/png" href="FAVICON.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -16,7 +19,7 @@
       min-height: 100%;
       background: #000;
       color: #e0e0e0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Work Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
     
     body::before {
@@ -368,7 +371,7 @@
           <span class="stat-label">Images</span>
         </div>
         <div class="stat">
-          <span class="stat-value">6</span>
+          <span class="stat-value">4</span>
           <span class="stat-label">Boards</span>
         </div>
         <div class="stat">
@@ -410,7 +413,7 @@
 
     <!-- Images Section -->
     <div class="images-section">
-      <h2 class="section-title">Artworks</h2>
+      <h2 class="section-title">All Images</h2>
       <div class="images-grid" id="images-grid"></div>
     </div>
   </div>
@@ -452,9 +455,7 @@
       { name: 'Inspiration', images: images.slice(0, 12) },
       { name: 'References', images: images.slice(12, 24) },
       { name: 'Favorites', images: images.slice(24, 36) },
-      { name: 'Abstract', images: images.slice(36, 44) },
-      { name: 'Portraits', images: images.slice(0, 8) },
-      { name: 'Landscapes', images: images.slice(8, 18) }
+      { name: 'Abstract', images: images.slice(36, 44) }
     ];
 
     // Create boards
