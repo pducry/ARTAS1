@@ -42,34 +42,49 @@
     .nav-left {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 0;
     }
 
     .nav-logo {
       display: flex;
       align-items: center;
-      justify-content: center;
-      width: 40px;
-      height: 40px;
-      margin-right: 16px;
+      gap: 8px;
+      text-decoration: none;
+      margin-right: 8px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      transition: opacity 0.2s ease;
+    }
+
+    .nav-logo:hover {
+      opacity: 0.8;
     }
 
     .nav-logo img {
-      height: 20px;
+      height: 19px;
       width: auto;
+      flex-shrink: 0;
+    }
+
+    .nav-divider {
+      width: 1px;
+      height: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      margin: 0 8px;
+      flex-shrink: 0;
     }
 
     .nav-links {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 2px;
     }
 
     .nav-link {
       position: relative;
       padding: 8px 14px;
-      font-size: 13px;
-      font-weight: 500;
+      font-size: 14px;
+      font-weight: 400;
       color: rgba(255, 255, 255, 0.6);
       text-decoration: none;
       border-radius: 24px;
@@ -185,24 +200,26 @@
     }
 
     .create-btn {
-      padding: 10px 16px;
-      background: #e60023;
-      border: none;
+      padding: 12px 22px;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.25);
       border-radius: 24px;
-      font-size: 13px;
-      font-weight: 600;
-      color: #fff;
+      font-size: 14px;
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.85);
       cursor: pointer;
       transition: all 0.2s ease;
     }
 
     .create-btn:hover {
-      background: #ad081b;
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.45);
+      color: #fff;
     }
 
     .nav-icon-btn {
-      width: 38px;
-      height: 38px;
+      width: 42px;
+      height: 42px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -227,8 +244,8 @@
     .user-avatar {
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px;
+      gap: 8px;
+      padding: 8px 10px;
       background: transparent;
       border: none;
       border-radius: 24px;
@@ -264,9 +281,7 @@
 
     /* Feed Grid */
     .feed-container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 20px;
+      padding: 20px 24px;
     }
 
     .feed-grid {
@@ -364,6 +379,179 @@
       border: 2px solid #fff;
     }
 
+    /* Upload Modal */
+    .upload-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .upload-overlay.active { opacity: 1; visibility: visible; }
+
+    .upload-modal {
+      width: 520px;
+      max-width: 90vw;
+      background: #111;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 36px;
+      transform: translateY(20px);
+      transition: transform 0.3s ease;
+    }
+
+    .upload-overlay.active .upload-modal { transform: translateY(0); }
+
+    .upload-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+
+    .upload-modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .upload-modal-close {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.06);
+      border: none;
+      border-radius: 50%;
+      color: rgba(255, 255, 255, 0.6);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .upload-modal-close:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+
+    .upload-dropzone {
+      position: relative;
+      border: 2px dashed rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .upload-dropzone:hover,
+    .upload-dropzone.dragover {
+      border-color: rgba(255, 255, 255, 0.4);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .upload-dropzone-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 16px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 50%;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .upload-dropzone-icon svg { width: 24px; height: 24px; }
+
+    .upload-dropzone-text {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 6px;
+    }
+
+    .upload-dropzone-hint {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.35);
+    }
+
+    .upload-dropzone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .upload-preview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .upload-preview-item {
+      position: relative;
+      aspect-ratio: 1;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #0a0a0a;
+    }
+
+    .upload-preview-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .upload-preview-remove {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.7);
+      border: none;
+      border-radius: 50%;
+      color: #fff;
+      font-size: 12px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .upload-preview-item:hover .upload-preview-remove { opacity: 1; }
+
+    .upload-submit-btn {
+      display: block;
+      width: 100%;
+      margin-top: 20px;
+      padding: 14px;
+      background: #fff;
+      border: none;
+      border-radius: 24px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #000;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .upload-submit-btn.ready {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .upload-submit-btn.ready:hover { background: #e0e0e0; }
+
     /* Responsive */
     @media (max-width: 768px) {
       .top-nav {
@@ -371,8 +559,13 @@
         height: 50px;
       }
 
-      .nav-links {
+      .nav-links,
+      .nav-divider {
         display: none;
+      }
+
+      .nav-logo {
+        margin-right: 0;
       }
 
       .nav-center {
@@ -400,7 +593,7 @@
       }
 
       .feed-container {
-        padding: 12px;
+        padding: 12px 16px;
       }
     }
   </style>
@@ -410,15 +603,16 @@
   <nav class="top-nav">
     <div class="nav-left">
       <a href="index.html" class="nav-logo">
-        <img src="logo.png" alt="ARTASAS">
+        <img src="logo2.png" alt="ARTASAS">
       </a>
+      <div class="nav-divider"></div>
       <div class="nav-links">
-        <a href="#" class="nav-link active">For You</a>
+        <a href="home_logada.html" class="nav-link active">For You</a>
         <a href="#" class="nav-link">
           Following
           <span class="badge"></span>
         </a>
-        <a href="#" class="nav-link">Explore</a>
+        <a href="index.html" class="nav-link">Explore</a>
         <a href="#" class="nav-link">Shop</a>
       </div>
     </div>
@@ -444,7 +638,7 @@
     </div>
 
     <div class="nav-right">
-      <button class="create-btn">Create</button>
+      <button class="create-btn">Upload</button>
       <button class="nav-icon-btn" title="Notifications">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -466,6 +660,28 @@
       </button>
     </div>
   </nav>
+
+  <!-- Upload Modal -->
+  <div class="upload-overlay" id="upload-overlay">
+    <div class="upload-modal">
+      <div class="upload-modal-header">
+        <span class="upload-modal-title">Upload Images</span>
+        <button class="upload-modal-close" id="upload-close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="upload-dropzone" id="upload-dropzone">
+        <div class="upload-dropzone-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+        <div class="upload-dropzone-text">Drag & drop images here or click to browse</div>
+        <div class="upload-dropzone-hint">JPG, PNG, GIF, WEBP — max 20MB each</div>
+        <input type="file" id="upload-input" accept="image/*" multiple>
+      </div>
+      <div class="upload-preview-grid" id="upload-preview-grid"></div>
+      <button class="upload-submit-btn" id="upload-submit">Upload Images</button>
+    </div>
+  </div>
 
   <!-- Main Content -->
   <main class="main-content">
@@ -556,10 +772,115 @@
     // Nav links active state
     document.querySelectorAll('.nav-link').forEach(link => {
       link.addEventListener('click', (e) => {
-        e.preventDefault();
+        if (link.getAttribute('href') === '#') e.preventDefault();
         document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
         link.classList.add('active');
       });
+    });
+
+    // Upload functionality
+    const uploadOverlay = document.getElementById('upload-overlay');
+    const uploadClose = document.getElementById('upload-close');
+    const uploadDropzone = document.getElementById('upload-dropzone');
+    const uploadInput = document.getElementById('upload-input');
+    const uploadPreviewGrid = document.getElementById('upload-preview-grid');
+    const uploadSubmitBtn = document.getElementById('upload-submit');
+    const createBtn = document.querySelector('.create-btn');
+    let pendingFiles = [];
+
+    createBtn.addEventListener('click', () => uploadOverlay.classList.add('active'));
+    uploadClose.addEventListener('click', () => closeUploadModal());
+    uploadOverlay.addEventListener('click', (e) => {
+      if (e.target === uploadOverlay) closeUploadModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && uploadOverlay.classList.contains('active')) closeUploadModal();
+    });
+
+    function closeUploadModal() {
+      uploadOverlay.classList.remove('active');
+      pendingFiles = [];
+      uploadPreviewGrid.innerHTML = '';
+      uploadSubmitBtn.classList.remove('ready');
+    }
+
+    ['dragenter', 'dragover'].forEach(evt => {
+      uploadDropzone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        uploadDropzone.classList.add('dragover');
+      });
+    });
+    ['dragleave', 'drop'].forEach(evt => {
+      uploadDropzone.addEventListener(evt, () => uploadDropzone.classList.remove('dragover'));
+    });
+
+    uploadDropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/'));
+      addFiles(files);
+    });
+
+    uploadInput.addEventListener('change', () => {
+      addFiles([...uploadInput.files]);
+      uploadInput.value = '';
+    });
+
+    function addFiles(files) {
+      files.forEach(file => {
+        if (file.size > 20 * 1024 * 1024) return;
+        pendingFiles.push(file);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const item = document.createElement('div');
+          item.className = 'upload-preview-item';
+          item.innerHTML = `
+            <img src="${e.target.result}" alt="">
+            <button class="upload-preview-remove">&times;</button>
+          `;
+          item.querySelector('.upload-preview-remove').addEventListener('click', () => {
+            const idx = [...uploadPreviewGrid.children].indexOf(item);
+            pendingFiles.splice(idx, 1);
+            item.remove();
+            uploadSubmitBtn.classList.toggle('ready', pendingFiles.length > 0);
+          });
+          uploadPreviewGrid.appendChild(item);
+        };
+        reader.readAsDataURL(file);
+      });
+      uploadSubmitBtn.classList.toggle('ready', pendingFiles.length > 0);
+    }
+
+    uploadSubmitBtn.addEventListener('click', () => {
+      if (pendingFiles.length === 0) return;
+      pendingFiles.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const author = authors[Math.floor(Math.random() * authors.length)];
+          const item = document.createElement('div');
+          item.className = 'feed-item';
+          item.innerHTML = `
+            <img src="${e.target.result}" alt="Uploaded" loading="lazy">
+            <div class="feed-item-overlay"></div>
+            <button class="feed-save-btn">Save</button>
+            <div class="feed-item-info">
+              <div class="feed-author">
+                <img src="${author.avatar}" alt="${author.name}">
+                <span>${author.name}</span>
+              </div>
+            </div>
+          `;
+          const saveBtn = item.querySelector('.feed-save-btn');
+          saveBtn.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            saveBtn.textContent = 'Saved!';
+            saveBtn.style.background = '#111';
+            setTimeout(() => { saveBtn.textContent = 'Save'; saveBtn.style.background = ''; }, 1500);
+          });
+          feedGrid.prepend(item);
+        };
+        reader.readAsDataURL(file);
+      });
+      closeUploadModal();
     });
   </script>
 </body>

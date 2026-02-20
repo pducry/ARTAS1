@@ -1,0 +1,114 @@
+---
+description: Image gallery patterns — grid layouts, detail modals, save-to-board, and hover interactions
+globs: **/*.html
+alwaysApply: false
+---
+
+# Image Gallery Patterns
+
+## Gallery Item Structure
+
+Every gallery item follows a consistent pattern: a container with an image, a hover-reveal save button, and a dropdown for board selection.
+
+```html
+<div class="gallery-item">
+  <img src="..." alt="..." loading="lazy">
+  <button class="gallery-save-btn">
+    Save
+    <div class="gallery-save-dropdown">
+      <button class="gallery-save-dropdown-item">Inspiration</button>
+      <button class="gallery-save-dropdown-item">References</button>
+      <button class="gallery-save-dropdown-item">Favorites</button>
+    </div>
+  </button>
+</div>
+```
+
+- Save button is **hidden by default** (`opacity: 0`) and revealed on `.gallery-item:hover`
+- Dropdown appears on `.gallery-save-btn:hover` via `opacity`/`visibility`/`transform` transitions
+- Board names: **Inspiration**, **References**, **Favorites**
+
+## Grid Layouts
+
+Use CSS Grid with `auto-fill` and `minmax` for responsive columns:
+
+```css
+/* Feed grid (home_logada) */
+.feed-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+/* Grid view (index) */
+.grid-view-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  max-width: 1800px;
+  margin: 0 auto;
+}
+```
+
+Multiple layout presets use numbered classes (`layout-1` through `layout-4`) with `nth-child` rules for featured items spanning multiple columns/rows.
+
+## Image Detail View
+
+Full-screen overlay with two-panel layout: image area + sidebar.
+
+```css
+.image-detail {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: #000;
+  display: flex;
+}
+```
+
+- **Left panel** (`.detail-image-area`): centered image with prev/next navigation arrows and image counter
+- **Right panel** (`.detail-sidebar`, 320px): color palette, description, tags, save button, "also saved by" users
+- Toggle with `.active` class using `opacity`/`visibility` transitions
+- Close button: pill-shaped with glass effect, positioned top-left at `z-index: 210`
+
+## Save-to-Board Interactions
+
+Two mechanisms for saving images:
+
+1. **Dropdown save** — hover-reveal dropdown on gallery/grid items with board options
+2. **Drag-to-board** — full-screen overlay (`.drag-boards-overlay`) with board targets, activated by dragging an image from the detail view
+
+```css
+/* Drag board target */
+.drag-board-target {
+  width: 160px;
+  height: 100px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+}
+```
+
+## Glass Morphism Style for UI Controls
+
+All interactive overlays use consistent glass styling:
+
+```css
+background: rgba(0, 0, 0, 0.6);     /* or rgba(0, 0, 0, 0.9) for dropdowns */
+backdrop-filter: blur(8px);           /* 8px for buttons, 12px for dropdowns */
+border: 1px solid rgba(255, 255, 255, 0.1–0.15);
+border-radius: 4–6px;
+```
+
+## Hover Behavior
+
+- Gallery items: save button fades in (`opacity: 0` → `1`)
+- Feed items: lift effect (`translateY(-4px)`) + gradient overlay fades in
+- Color swatches: `scale(1.2)` with hex tooltip
+- All transitions use `0.2s ease` or `var(--transition)` (`0.3s cubic-bezier(0.4, 0, 0.2, 1)`)
+
+## Responsive Breakpoints
+
+- **768px**: 2-column grid, hide nav links, reduce padding
+- Images always use `object-fit: cover` with `width: 100%`
+- Items use `border-radius: 4px` (grid) or `16px` (feed)

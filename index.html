@@ -42,8 +42,32 @@
     
     body:active { cursor: grabbing; }
 
-    .logo { position: fixed; top: 24px; left: 50%; transform: translateX(-50%); z-index: 100; pointer-events: none; }
-    .logo img { height: 18px; width: auto; opacity: 0.7; }
+    .logo { position: fixed; top: 24px; left: 50%; transform: translateX(-50%); z-index: 100; }
+    .logo a { display: block; pointer-events: auto; }
+    .logo img { height: 21px; width: auto; opacity: 0.7; transition: opacity 0.2s ease; }
+    .logo a:hover img { opacity: 1; }
+
+    .auth-links {
+      position: fixed;
+      top: 24px;
+      right: 40px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .auth-link {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 13px;
+      font-weight: 400;
+      text-decoration: none;
+      letter-spacing: 0.02em;
+      transition: color 0.2s ease;
+    }
+
+    .auth-link:hover { color: #fff; }
+
 
     #gallery-container { position: fixed; inset: 0; overflow: hidden; background: #000; }
     #gallery-canvas { position: fixed; inset: 0; pointer-events: none; }
@@ -649,7 +673,13 @@
 <body>
   <div class="loading" id="loading"><div class="loading-spinner"></div></div>
   
-  <div class="logo"><img src="logo.png" alt="ARTASAS"></div>
+  <div class="logo"><a href="index.html"><img src="logo2.png" alt="ARTASAS"></a></div>
+  
+  <div class="auth-links">
+    <a href="home_logada.html" class="auth-link">Log in</a>
+    <a href="home_logada.html" class="auth-link">Sign up</a>
+  </div>
+
   
   <div id="gallery-container"><div id="gallery-canvas"></div></div>
   
