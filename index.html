@@ -373,14 +373,23 @@
       transform: translateX(-50%);
       z-index: 100;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 20px;
+      gap: 10px;
+      max-width: calc(100vw - 48px);
+    }
+
+    .controls-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
     }
     
-    .controls-help { font-size: 11px; color: rgba(255, 255, 255, 0.35); letter-spacing: 0.02em; }
+    .controls-help { font-size: 11px; font-weight: 400; color: rgba(255, 255, 255, 0.35); letter-spacing: 0.02em; white-space: nowrap; }
     .controls-help span { margin: 0 8px; color: rgba(255, 255, 255, 0.2); }
     
-    .main-custom-wrapper { display: flex; align-items: center; gap: 8px; }
     
     .custom-toggle {
       display: flex;
@@ -407,19 +416,18 @@
     .custom-icon span:nth-child(3) { height: 6px; }
     
     .main-customization {
-      display: none;
+      display: flex;
       align-items: center;
       gap: 16px;
       padding: 8px 14px;
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(12px);
       border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 6px;
     }
     
-    .main-customization.active { display: flex; }
-    
     .custom-group { display: flex; align-items: center; gap: 10px; }
-    .custom-label { font-size: 10px; color: rgba(255, 255, 255, 0.4); text-transform: uppercase; letter-spacing: 0.1em; }
+    .custom-label { font-size: 10px; color: rgba(255, 255, 255, 0.4); text-transform: uppercase; letter-spacing: 0.1em; white-space: nowrap; }
     .custom-slider { width: 80px; height: 4px; -webkit-appearance: none; background: rgba(255, 255, 255, 0.1); border-radius: 2px; cursor: pointer; }
     .custom-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: rgba(255, 255, 255, 0.8); cursor: pointer; }
     .custom-divider { width: 1px; height: 16px; background: rgba(255, 255, 255, 0.1); }
@@ -447,6 +455,51 @@
     .grid-icon span { width: 5px; height: 5px; background: currentColor; border-radius: 1px; opacity: 0.8; }
     
     .zoom-indicator { position: fixed; bottom: 20px; right: 24px; z-index: 100; font-size: 10px; color: rgba(255, 255, 255, 0.3); font-variant-numeric: tabular-nums; letter-spacing: 0.05em; }
+
+    .view-switcher {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+    }
+
+    .view-mode-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 10px;
+      font-weight: 500;
+      font-family: inherit;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .view-mode-btn svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+
+    .view-mode-btn:hover {
+      color: rgba(255, 255, 255, 0.7);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .view-mode-btn.active {
+      color: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.12);
+    }
 
     /* Grid View */
     .grid-view {
@@ -659,7 +712,8 @@
     
     @media (max-width: 768px) {
       .controls-help { display: none; }
-      .main-custom-wrapper { display: none !important; }
+      .custom-toggle { display: none !important; }
+      #custom-row { display: none !important; }
       .home-switcher { display: none; }
       .grid-view { padding: 70px 16px 16px; }
       .grid-view-content, .grid-view-content.layout-1, .grid-view-content.layout-2, .grid-view-content.layout-3, .grid-view-content.layout-4 { 
@@ -682,6 +736,7 @@
 
   
   <div id="gallery-container"><div id="gallery-canvas"></div></div>
+  <canvas id="vortex-lines" style="position:fixed;inset:0;z-index:1;pointer-events:none;display:none;"></canvas>
   
   <div class="image-detail" id="image-detail">
     <button class="detail-close" id="detail-close">
@@ -778,30 +833,44 @@
   </div>
   
   <div class="controls">
-    <div class="controls-help">Drag to pan<span>·</span>Scroll to zoom<span>·</span>Click to view</div>
-    
-    <div class="main-custom-wrapper" id="main-custom-wrapper">
+    <div class="controls-row" id="custom-row" style="display:none;">
+      <div class="main-customization" id="main-customization"></div>
+    </div>
+    <div class="controls-row">
+      <div class="view-switcher" id="view-switcher">
+        <button class="view-mode-btn active" id="view-space" data-mode="space">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="6" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="4" r="1.5" fill="currentColor" stroke="none"/><circle cx="19" cy="7" r="1.5" fill="currentColor" stroke="none"/><circle cx="7" cy="14" r="1.5" fill="currentColor" stroke="none"/><circle cx="16" cy="13" r="1.5" fill="currentColor" stroke="none"/><circle cx="4" cy="20" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"/><circle cx="20" cy="18" r="1.5" fill="currentColor" stroke="none"/></svg>
+          SPACE
+        </button>
+        <button class="view-mode-btn" id="view-sphere" data-mode="sphere">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="9" ry="3.5"/><path d="M8.5 3.5C9 7 9 17 8.5 20.5" /><path d="M15.5 3.5C15 7 15 17 15.5 20.5" /></svg>
+          SPHERE
+        </button>
+        <button class="view-mode-btn" id="view-stream" data-mode="stream">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="8" width="5" height="8" rx="1"/><rect x="9.5" y="8" width="5" height="8" rx="1"/><rect x="18" y="8" width="5" height="8" rx="1"/><line x1="1" y1="12" x2="23" y2="12" stroke-dasharray="1 2" opacity="0.4"/></svg>
+          STREAM
+        </button>
+        <button class="view-mode-btn" id="view-focus" data-mode="focus">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><rect x="6.5" y="6.5" width="11" height="11" rx="1.5"/></svg>
+          FOCUS
+        </button>
+        <button class="view-mode-btn" id="view-queue" data-mode="queue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="6" width="18" height="12" rx="2"/><rect x="5" y="4" width="14" height="12" rx="2" opacity="0.5"/><rect x="7" y="2" width="10" height="12" rx="2" opacity="0.25"/></svg>
+          QUEUE
+        </button>
+        <button class="view-mode-btn" id="view-grids" data-mode="grids">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          GRIDS
+        </button>
+      </div>
       <button class="custom-toggle" id="custom-toggle">
         <div class="custom-icon"><span></span><span></span><span></span></div>
         CUSTOM
       </button>
-      <div class="main-customization" id="main-customization">
-        <div class="custom-group">
-          <span class="custom-label">Size</span>
-          <input type="range" class="custom-slider" id="main-size-slider" min="100" max="400" value="220">
-        </div>
-        <div class="custom-divider"></div>
-        <div class="custom-group">
-          <span class="custom-label">Spread</span>
-          <input type="range" class="custom-slider" id="main-spread-slider" min="500" max="3000" value="2000">
-        </div>
-      </div>
     </div>
-    
-    <button class="grid-toggle" id="grid-toggle">
-      <div class="grid-icon"><span></span><span></span><span></span><span></span></div>
-      GRIDS
-    </button>
+    <div class="controls-row">
+      <div class="controls-help" id="controls-help">Drag to pan<span>·</span>Scroll to zoom<span>·</span>Click to view</div>
+    </div>
   </div>
   
   <div class="zoom-indicator" id="zoom-indicator">0%</div>
@@ -846,9 +915,12 @@
         this.colorCanvas = document.getElementById('color-canvas');
         this.gridView = document.getElementById('grid-view');
         this.gridContent = document.getElementById('grid-content');
-        this.gridToggle = document.getElementById('grid-toggle');
+        this.gridToggle = document.getElementById('view-grids');
         this.zoomIndicator = document.getElementById('zoom-indicator');
         this.loading = document.getElementById('loading');
+        this.controlsHelp = document.getElementById('controls-help');
+        this.vortexCanvas = document.getElementById('vortex-lines');
+        this.vortexCtx = this.vortexCanvas.getContext('2d');
         
         this.savedImages = new Set();
         this.currentImageIndex = 0;
@@ -856,7 +928,9 @@
         this.imageData = [];
         this.items = [];
         this.isGridView = false;
+        this.viewMode = 'space';
         
+        // Space mode state
         this.cameraZ = 0;
         this.targetCameraZ = 0;
         this.panX = 0;
@@ -883,6 +957,44 @@
         this.baseSize = 220;
         this.spreadMultiplier = 1;
         
+        // Sphere mode state — quaternion-based free rotation
+        this.sqw = 1; this.sqx = 0; this.sqy = 0; this.sqz = 0;
+        this.tqw = 1; this.tqx = 0; this.tqy = 0; this.tqz = 0;
+        this.sphereVelX = 0;
+        this.sphereVelY = 0;
+        this.sphereRadius = 550;
+        this.sphereCamDist = 1600;
+        this.targetSphereCamDist = 1600;
+        this.sphereFov = 900;
+        this.sphereItemSize = 110;
+        this.sphereAutoRotate = true;
+        
+        // Stream mode state — horizontal filmstrip
+        this.streamOffset = 0;
+        this.streamSpeed = 1.5;
+        this.streamItemW = 280;
+        this.streamGap = 24;
+        this.streamMaxH = 360;
+        this.streamDragVel = 0;
+        this.streamHeld = false;
+        this.streamHover = false;
+        
+        // Focus mode state — one image at a time
+        this.focusIndex = 0;
+        this.focusTarget = 0;
+        this.focusProgress = 0;
+        this.focusScrollAccum = 0;
+        this.focusTransitionSpeed = 0.08;
+        this.focusPaused = false;
+        
+        // Queue mode state — Z-axis file of images
+        this.queueOffset = 0;
+        this.queueTargetOffset = 0;
+        this.queueSpacing = 320;
+        this.queueFov = 800;
+        this.queueAutoSpeed = 0.4;
+        this.queuePaused = false;
+        
         this.init();
       }
       
@@ -895,11 +1007,13 @@
         this.setupMainCustomization();
         this.setupHomeSwitcher();
         this.setupDragToBoard();
+        this.setupViewSwitcher();
         this.setGridLayout('1');
+        this.computeSpherePositions();
+        this.vortexCanvas.style.display = 'block';
         this.animate();
         setTimeout(() => this.loading.classList.add('hidden'), 500);
         
-        // Check for URL parameter to open image detail
         this.checkUrlParams();
       }
       
@@ -979,6 +1093,8 @@
               this.openDetail(imgData);
             }
           });
+          item.addEventListener('mouseenter', () => { this.streamHover = true; });
+          item.addEventListener('mouseleave', () => { this.streamHover = false; });
           this.canvas.appendChild(item);
           
           const baseX = (Math.random() - 0.5) * this.spaceWidth;
@@ -1101,15 +1217,36 @@
         
         this.container.addEventListener('wheel', e => {
           e.preventDefault();
-          this.targetCameraZ = Math.max(this.minZ, Math.min(this.maxZ, this.targetCameraZ + e.deltaY * 2));
+          if (this.viewMode === 'sphere') {
+            this.targetSphereCamDist = Math.max(-200, Math.min(3000, this.targetSphereCamDist + e.deltaY * 1.5));
+          } else if (this.viewMode === 'stream') {
+            this.streamSpeed = Math.max(-10, Math.min(10, this.streamSpeed - e.deltaY * 0.008));
+          } else if (this.viewMode === 'focus') {
+            this.focusPaused = false;
+            this.focusScrollAccum += e.deltaY;
+            const threshold = 80;
+            if (this.focusScrollAccum > threshold) {
+              this.focusTarget = Math.min(this.items.length - 1, this.focusTarget + 1);
+              this.focusScrollAccum = 0;
+            } else if (this.focusScrollAccum < -threshold) {
+              this.focusTarget = Math.max(0, this.focusTarget - 1);
+              this.focusScrollAccum = 0;
+            }
+          } else if (this.viewMode === 'queue') {
+            this.queuePaused = false;
+            this.queueAutoSpeed = Math.max(-8, Math.min(8, this.queueAutoSpeed + e.deltaY * 0.006));
+          } else {
+            this.targetCameraZ = Math.max(this.minZ, Math.min(this.maxZ, this.targetCameraZ + e.deltaY * 2));
+          }
         }, { passive: false });
         
         document.getElementById('detail-close').addEventListener('click', () => this.closeDetail());
         document.getElementById('nav-prev').addEventListener('click', () => this.navigateImage(-1));
         document.getElementById('nav-next').addEventListener('click', () => this.navigateImage(1));
         this.saveBoardBtn.addEventListener('click', () => this.toggleSave());
-        this.gridToggle.addEventListener('click', () => this.toggleGrid());
-        document.getElementById('grid-close').addEventListener('click', () => this.toggleGrid());
+        document.getElementById('grid-close').addEventListener('click', () => {
+          document.getElementById('view-space').click();
+        });
         
         // 3D tilt effect on detail image
         this.detailImage.addEventListener('mousemove', (e) => {
@@ -1120,7 +1257,7 @@
         document.addEventListener('keydown', e => {
           if (e.key === 'Escape') {
             if (this.imageDetail.classList.contains('active')) this.closeDetail();
-            else if (this.isGridView) this.toggleGrid();
+            else if (this.isGridView) document.getElementById('view-space').click();
           }
           if (this.imageDetail.classList.contains('active')) {
             if (e.key === 'ArrowLeft') this.navigateImage(-1);
@@ -1260,6 +1397,147 @@
         }, 2000);
       }
       
+      computeSpherePositions() {
+        const total = this.items.length;
+        const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+        this.items.forEach((item, i) => {
+          const y = 1 - (i / (total - 1)) * 2;
+          const radiusAtY = Math.sqrt(1 - y * y);
+          const theta = goldenAngle * i;
+          item.sphereX = radiusAtY * Math.cos(theta);
+          item.sphereY = y;
+          item.sphereZ = radiusAtY * Math.sin(theta);
+        });
+      }
+      
+      // Quaternion helpers
+      quatMultiply(aw, ax, ay, az, bw, bx, by, bz) {
+        return [
+          aw*bw - ax*bx - ay*by - az*bz,
+          aw*bx + ax*bw + ay*bz - az*by,
+          aw*by - ax*bz + ay*bw + az*bx,
+          aw*bz + ax*by - ay*bx + az*bw
+        ];
+      }
+      
+      quatFromAxis(ax, ay, az, angle) {
+        const half = angle / 2;
+        const s = Math.sin(half);
+        return [Math.cos(half), ax * s, ay * s, az * s];
+      }
+      
+      quatRotateVec(qw, qx, qy, qz, vx, vy, vz) {
+        const ix = qw*vx + qy*vz - qz*vy;
+        const iy = qw*vy + qz*vx - qx*vz;
+        const iz = qw*vz + qx*vy - qy*vx;
+        const iw = -qx*vx - qy*vy - qz*vz;
+        return [
+          ix*qw + iw*(-qx) + iy*(-qz) - iz*(-qy),
+          iy*qw + iw*(-qy) + iz*(-qx) - ix*(-qz),
+          iz*qw + iw*(-qz) + ix*(-qy) - iy*(-qx)
+        ];
+      }
+      
+      quatNormalize(w, x, y, z) {
+        const len = Math.sqrt(w*w + x*x + y*y + z*z);
+        return [w/len, x/len, y/len, z/len];
+      }
+      
+      quatSlerp(aw, ax, ay, az, bw, bx, by, bz, t) {
+        let dot = aw*bw + ax*bx + ay*by + az*bz;
+        if (dot < 0) { bw = -bw; bx = -bx; by = -by; bz = -bz; dot = -dot; }
+        if (dot > 0.9995) {
+          return this.quatNormalize(aw + t*(bw-aw), ax + t*(bx-ax), ay + t*(by-ay), az + t*(bz-az));
+        }
+        const theta0 = Math.acos(dot);
+        const theta = theta0 * t;
+        const sinTheta = Math.sin(theta);
+        const sinTheta0 = Math.sin(theta0);
+        const s0 = Math.cos(theta) - dot * sinTheta / sinTheta0;
+        const s1 = sinTheta / sinTheta0;
+        return this.quatNormalize(s0*aw + s1*bw, s0*ax + s1*bx, s0*ay + s1*by, s0*az + s1*bz);
+      }
+      
+      applySphereRotation(dx, dy) {
+        const angle = Math.sqrt(dx*dx + dy*dy);
+        if (angle < 0.0001) return;
+        const ax = -dy / angle;
+        const ay = dx / angle;
+        const [rw, rx, ry, rz] = this.quatFromAxis(ax, ay, 0, angle);
+        [this.tqw, this.tqx, this.tqy, this.tqz] = this.quatMultiply(rw, rx, ry, rz, this.tqw, this.tqx, this.tqy, this.tqz);
+        [this.tqw, this.tqx, this.tqy, this.tqz] = this.quatNormalize(this.tqw, this.tqx, this.tqy, this.tqz);
+      }
+      
+      setupViewSwitcher() {
+        const btns = document.querySelectorAll('.view-mode-btn');
+        btns.forEach(btn => {
+          btn.addEventListener('click', () => {
+            const mode = btn.dataset.mode;
+            if (mode === this.viewMode) return;
+            
+            if (this.isGridView) {
+              this.isGridView = false;
+              this.gridView.classList.remove('active');
+              document.getElementById('grid-close').classList.remove('active');
+              document.getElementById('grid-customization').classList.remove('active');
+              document.body.style.cursor = 'grab';
+            }
+            
+            this.viewMode = mode;
+            btns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            if (mode === 'grids') {
+              this.isGridView = true;
+              this.gridView.classList.add('active');
+              document.getElementById('grid-close').classList.add('active');
+              document.getElementById('grid-customization').classList.add('active');
+              this.controlsHelp.innerHTML = 'Click to view<span>·</span>Customize layout above';
+              this.vortexCanvas.style.display = 'none';
+              document.body.style.cursor = 'default';
+              document.getElementById('custom-toggle').style.display = 'none';
+              document.getElementById('custom-row').style.display = 'none';
+            } else if (mode === 'sphere') {
+              document.getElementById('custom-toggle').style.display = 'flex';
+              this.controlsHelp.innerHTML = 'Drag to rotate<span>·</span>Scroll to zoom<span>·</span>Click to view';
+              this.sphereVelX = 0;
+              this.sphereVelY = 0;
+              this.sphereAutoRotate = true;
+              this.vortexCanvas.style.display = 'block';
+            } else if (mode === 'stream') {
+              document.getElementById('custom-toggle').style.display = 'flex';
+              this.controlsHelp.innerHTML = 'Drag to scrub<span>·</span>Scroll to change speed<span>·</span>Click to view';
+              this.vortexCanvas.style.display = 'block';
+              this.streamSpeed = 1.5;
+              this.items.forEach(item => { item.el.style.transform = ''; });
+            } else if (mode === 'focus') {
+              document.getElementById('custom-toggle').style.display = 'flex';
+              this.controlsHelp.innerHTML = 'Scroll to browse<span>·</span>Click to view details';
+              this.vortexCanvas.style.display = 'block';
+              this.focusIndex = 0;
+              this.focusTarget = 0;
+              this.focusProgress = 0;
+              this.focusScrollAccum = 0;
+              this.items.forEach(item => { item.el.style.transform = ''; });
+            } else if (mode === 'queue') {
+              document.getElementById('custom-toggle').style.display = 'flex';
+              this.controlsHelp.innerHTML = 'Scroll to change speed<span>·</span>Drag to advance<span>·</span>Click to view';
+              this.vortexCanvas.style.display = 'block';
+              this.queueOffset = 0;
+              this.queueTargetOffset = 0;
+              this.queueAutoSpeed = 0.4;
+              this.items.forEach(item => { item.el.style.transform = ''; });
+            } else {
+              document.getElementById('custom-toggle').style.display = 'flex';
+              this.controlsHelp.innerHTML = 'Drag to pan<span>·</span>Scroll to zoom<span>·</span>Click to view';
+              this.items.forEach(item => { item.el.style.transform = ''; });
+              this.vortexCanvas.style.display = 'block';
+            }
+            this.buildCustomPanel();
+          });
+        });
+      }
+      
       onDown(px, py) {
         this.isDragging = true;
         this.dragStarted = false;
@@ -1269,6 +1547,12 @@
         this.lastY = py;
         this.velX = 0;
         this.velY = 0;
+        this.sphereVelX = 0;
+        this.sphereVelY = 0;
+        if (this.viewMode === 'stream') {
+          this.streamHeld = true;
+          this.streamDragVel = 0;
+        }
         document.body.style.cursor = 'grabbing';
       }
       
@@ -1277,20 +1561,54 @@
         const dx = px - this.lastX;
         const dy = py - this.lastY;
         if (Math.abs(px - this.startDragX) > 5 || Math.abs(py - this.startDragY) > 5) this.dragStarted = true;
-        this.velX = dx * 0.7;
-        this.velY = dy * 0.7;
-        this.targetPanX += dx * 1.5;
-        this.targetPanY += dy * 1.5;
+        
+        if (this.viewMode === 'sphere') {
+          const sensitivity = 0.006;
+          this.sphereVelX = dx * sensitivity;
+          this.sphereVelY = dy * sensitivity;
+          this.applySphereRotation(dx * sensitivity, dy * sensitivity);
+        } else if (this.viewMode === 'stream') {
+          this.streamDragVel = -dx * 3.5;
+          this.streamOffset += this.streamDragVel;
+        } else if (this.viewMode === 'focus') {
+          this.focusPaused = true;
+        } else if (this.viewMode === 'queue') {
+          this.queuePaused = true;
+        } else {
+          this.velX = dx * 0.7;
+          this.velY = dy * 0.7;
+          this.targetPanX += dx * 1.5;
+          this.targetPanY += dy * 1.5;
+        }
+        
         this.lastX = px;
         this.lastY = py;
       }
       
       onUp() {
         this.isDragging = false;
+        if (this.viewMode === 'stream') {
+          this.streamHeld = false;
+        }
         document.body.style.cursor = 'grab';
       }
       
       animate() {
+        if (this.viewMode === 'sphere') {
+          this.animateSphere();
+        } else if (this.viewMode === 'stream') {
+          this.animateStream();
+        } else if (this.viewMode === 'focus') {
+          this.animateFocus();
+        } else if (this.viewMode === 'queue') {
+          this.animateQueue();
+        } else {
+          this.animateSpace();
+        }
+        requestAnimationFrame(() => this.animate());
+      }
+      
+      animateSpace() {
         if (!this.isDragging) {
           this.targetPanX += this.velX;
           this.targetPanY += this.velY;
@@ -1302,8 +1620,16 @@
         this.panY += (this.targetPanY - this.panY) * this.ease;
         this.cameraZ += (this.targetCameraZ - this.cameraZ) * this.zEase;
         
-        const cx = window.innerWidth / 2;
-        const cy = window.innerHeight / 2;
+        const W = window.innerWidth;
+        const H = window.innerHeight;
+        const cx = W / 2;
+        const cy = H / 2;
+        
+        const cvs = this.vortexCanvas;
+        cvs.width = W;
+        cvs.height = H;
+        const ctx = this.vortexCtx;
+        ctx.clearRect(0, 0, W, H);
         
         this.items.forEach(item => {
           const relativeZ = item.z - this.cameraZ;
@@ -1331,10 +1657,328 @@
           item.el.style.opacity = opacity;
           item.el.style.zIndex = Math.round(10000 - relativeZ);
           item.el.style.filter = relativeZ > 2000 ? `blur(${Math.min(3, (relativeZ - 2000) / 1000)}px)` : 'none';
+          item.el.style.borderRadius = '6px';
         });
         
         this.zoomIndicator.textContent = `${Math.round((this.cameraZ / this.spaceDepth) * 100)}%`;
-        requestAnimationFrame(() => this.animate());
+      }
+      
+      animateSphere() {
+        // Inertia when not dragging
+        if (!this.isDragging) {
+          if (Math.abs(this.sphereVelX) > 0.0001 || Math.abs(this.sphereVelY) > 0.0001) {
+            this.applySphereRotation(this.sphereVelX, this.sphereVelY);
+            this.sphereVelX *= 0.96;
+            this.sphereVelY *= 0.96;
+          } else if (this.sphereAutoRotate && this.sphereCamDist > 1000) {
+            this.applySphereRotation(0.0012, 0.0003);
+          }
+        }
+        
+        // Smooth interpolation of quaternion
+        [this.sqw, this.sqx, this.sqy, this.sqz] = this.quatSlerp(
+          this.sqw, this.sqx, this.sqy, this.sqz,
+          this.tqw, this.tqx, this.tqy, this.tqz,
+          0.12
+        );
+        
+        this.sphereCamDist += (this.targetSphereCamDist - this.sphereCamDist) * 0.08;
+        
+        const cx = window.innerWidth / 2;
+        const cy = window.innerHeight / 2;
+        const R = this.sphereRadius;
+        const size = this.sphereItemSize;
+        const camDist = this.sphereCamDist;
+        
+        this.items.forEach(item => {
+          const [rx, ry, rz] = this.quatRotateVec(
+            this.sqw, this.sqx, this.sqy, this.sqz,
+            item.sphereX * R, item.sphereY * R, item.sphereZ * R
+          );
+          
+          const perspZ = rz + camDist;
+          
+          if (perspZ < 80) {
+            item.el.style.display = 'none';
+            return;
+          }
+          
+          item.el.style.display = 'block';
+          const scale = this.sphereFov / perspZ;
+          const screenX = cx + rx * scale;
+          const screenY = cy + ry * scale;
+          const w = size * scale;
+          const h = size * scale;
+          
+          const [nx, ny, nz] = this.quatRotateVec(
+            this.sqw, this.sqx, this.sqy, this.sqz,
+            item.sphereX, item.sphereY, item.sphereZ
+          );
+          
+          const normalizedZ = nz;
+          const opacity = normalizedZ < -0.6 ? 0 : Math.max(0.08, 0.4 + normalizedZ * 0.6);
+          
+          if (opacity <= 0.01) {
+            item.el.style.display = 'none';
+            return;
+          }
+          
+          const tiltY = Math.atan2(nx, nz) * (180 / Math.PI);
+          const tiltX = Math.atan2(-ny, Math.sqrt(nx*nx + nz*nz)) * (180 / Math.PI);
+          
+          item.el.style.left = `${screenX - w/2}px`;
+          item.el.style.top = `${screenY - h/2}px`;
+          item.el.style.width = `${w}px`;
+          item.el.style.height = `${h}px`;
+          item.el.style.opacity = opacity;
+          item.el.style.zIndex = Math.round(10000 + rz);
+          item.el.style.filter = normalizedZ < -0.2 ? `blur(${Math.min(2, (-normalizedZ - 0.2) * 3)}px)` : 'none';
+          item.el.style.borderRadius = '4px';
+          item.el.style.transform = `perspective(800px) rotateY(${tiltY * 0.4}deg) rotateX(${tiltX * 0.4}deg)`;
+        });
+        
+        const zoomPct = Math.round((1600 / this.sphereCamDist) * 100);
+        this.zoomIndicator.textContent = `${zoomPct}%`;
+      }
+      
+      animateStream() {
+        const W = window.innerWidth;
+        const H = window.innerHeight;
+        const maxH = Math.min(this.streamMaxH, H * 0.85);
+        const gap = this.streamGap;
+        
+        let totalLen = 0;
+        const positions = this.items.map(item => {
+          const ratio = (item.originalWidth || 300) / (item.originalHeight || 200);
+          const h = maxH;
+          const w = h * ratio;
+          const start = totalLen;
+          totalLen += w + gap;
+          return { w, h, start };
+        });
+        
+        if (this.streamHeld && !this.isDragging) {
+          this.streamHeld = false;
+        }
+        
+        const paused = this.streamHeld || (this.streamHover && !this.isDragging);
+        
+        if (paused) {
+          this.streamDragVel *= 0.96;
+        } else {
+          this.streamDragVel *= 0.985;
+          this.streamOffset += this.streamDragVel;
+          this.streamOffset += this.streamSpeed;
+        }
+        
+        if (totalLen > 0) {
+          this.streamOffset = ((this.streamOffset % totalLen) + totalLen) % totalLen;
+        }
+        
+        const cy = H / 2;
+        
+        const cvs = this.vortexCanvas;
+        cvs.width = W;
+        cvs.height = H;
+        const ctx = this.vortexCtx;
+        ctx.clearRect(0, 0, W, H);
+        
+        ctx.beginPath();
+        ctx.moveTo(0, cy);
+        ctx.lineTo(W, cy);
+        ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        
+        this.items.forEach((item, i) => {
+          const p = positions[i];
+          let x = p.start - this.streamOffset;
+          
+          x = ((x % totalLen) + totalLen) % totalLen;
+          if (x > totalLen - p.w) x -= totalLen;
+          
+          const centerX = x + p.w / 2;
+          const distFromCenter = Math.abs(centerX - W / 2);
+          const maxDist = W / 2 + p.w;
+          const normDist = Math.min(1, distFromCenter / maxDist);
+          
+          const opacity = Math.max(0.08, 1 - normDist * normDist);
+          const scale = 0.85 + 0.15 * (1 - normDist);
+          const blur = normDist > 0.7 ? (normDist - 0.7) * 6 : 0;
+          
+          if (x > -p.w - 100 && x < W + 100) {
+            item.el.style.display = 'block';
+            item.el.style.left = `${x}px`;
+            item.el.style.top = `${cy - p.h / 2}px`;
+            item.el.style.width = `${p.w}px`;
+            item.el.style.height = `${p.h}px`;
+            item.el.style.opacity = opacity;
+            item.el.style.zIndex = Math.round(1000 - normDist * 100);
+            item.el.style.filter = blur > 0 ? `blur(${blur.toFixed(1)}px)` : 'none';
+            item.el.style.borderRadius = '6px';
+            item.el.style.transform = `scale(${scale.toFixed(3)})`;
+          } else {
+            item.el.style.display = 'none';
+          }
+        });
+        
+        const absSpeed = Math.abs(this.streamSpeed);
+        const dir = this.streamSpeed >= 0 ? '→' : '←';
+        this.zoomIndicator.textContent = `${dir} ${absSpeed.toFixed(1)}x`;
+      }
+      
+      animateFocus() {
+        const W = window.innerWidth;
+        const H = window.innerHeight;
+        const cx = W / 2;
+        const cy = H / 2;
+        const total = this.items.length;
+        
+        if (!this.focusPaused) {
+          this.focusProgress += (this.focusTarget - this.focusProgress) * this.focusTransitionSpeed;
+        }
+        
+        const cvs = this.vortexCanvas;
+        cvs.width = W;
+        cvs.height = H;
+        const ctx = this.vortexCtx;
+        ctx.clearRect(0, 0, W, H);
+        
+        const maxImgH = Math.min(H * 0.7, 600);
+        
+        this.items.forEach((item, i) => {
+          const diff = i - this.focusProgress;
+          const absDiff = Math.abs(diff);
+          
+          if (absDiff > 2.5) {
+            item.el.style.display = 'none';
+            return;
+          }
+          
+          const ratio = (item.originalWidth || 300) / (item.originalHeight || 200);
+          const imgH = maxImgH;
+          const imgW = imgH * ratio;
+          
+          const offsetY = diff * (H * 0.85);
+          const scale = Math.max(0.4, 1 - absDiff * 0.35);
+          const opacity = Math.max(0, 1 - absDiff * 0.7);
+          const blur = absDiff > 0.5 ? Math.min(8, (absDiff - 0.5) * 8) : 0;
+          
+          const x = cx - (imgW * scale) / 2;
+          const y = cy - (imgH * scale) / 2 + offsetY;
+          
+          item.el.style.display = 'block';
+          item.el.style.left = `${x}px`;
+          item.el.style.top = `${y}px`;
+          item.el.style.width = `${imgW * scale}px`;
+          item.el.style.height = `${imgH * scale}px`;
+          item.el.style.opacity = opacity;
+          item.el.style.zIndex = Math.round(1000 - absDiff * 100);
+          item.el.style.filter = blur > 0 ? `blur(${blur.toFixed(1)}px)` : 'none';
+          item.el.style.borderRadius = '8px';
+          item.el.style.transform = `scale(1)`;
+        });
+        
+        const current = Math.round(this.focusProgress);
+        this.zoomIndicator.textContent = `${Math.min(current + 1, total)} / ${total}`;
+        
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+        const barW = 3;
+        const barH = Math.min(H * 0.3, 200);
+        const barX = W - 24;
+        const barY = cy - barH / 2;
+        ctx.fillRect(barX, barY, barW, barH);
+        
+        const thumbH = Math.max(12, barH / total);
+        const thumbY = barY + (this.focusProgress / Math.max(1, total - 1)) * (barH - thumbH);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fillRect(barX, thumbY, barW, thumbH);
+      }
+      
+      animateQueue() {
+        const W = window.innerWidth;
+        const H = window.innerHeight;
+        const cx = W / 2;
+        const cy = H / 2;
+        const total = this.items.length;
+        const spacing = this.queueSpacing;
+        const fov = this.queueFov;
+        const totalDepth = total * spacing;
+        
+        if (!this.queuePaused) {
+          this.queueTargetOffset += this.queueAutoSpeed;
+          this.queueOffset += (this.queueTargetOffset - this.queueOffset) * 0.06;
+        } else {
+          this.queueTargetOffset = this.queueOffset;
+        }
+        
+        const cvs = this.vortexCanvas;
+        cvs.width = W;
+        cvs.height = H;
+        const ctx = this.vortexCtx;
+        ctx.clearRect(0, 0, W, H);
+        
+        const vanishX = cx;
+        const vanishY = cy * 0.9;
+        for (let l = 0; l < 4; l++) {
+          const angle = (l / 4) * Math.PI * 2 + Math.PI / 4;
+          const nearR = 300;
+          const farR = 5;
+          ctx.beginPath();
+          ctx.moveTo(vanishX + Math.cos(angle) * nearR, vanishY + Math.sin(angle) * nearR * 0.4);
+          ctx.lineTo(vanishX + Math.cos(angle) * farR, vanishY + Math.sin(angle) * farR * 0.4);
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+        
+        const sorted = this.items.map((item, i) => {
+          let z = i * spacing - this.queueOffset;
+          z = ((z % totalDepth) + totalDepth) % totalDepth;
+          if (z > totalDepth * 0.5) z -= totalDepth;
+          return { item, i, z };
+        }).filter(e => e.z > -spacing * 0.5 && e.z < totalDepth * 0.6)
+          .sort((a, b) => b.z - a.z);
+        
+        const visibleSet = new Set(sorted.map(e => e.i));
+        this.items.forEach((item, i) => {
+          if (!visibleSet.has(i)) item.el.style.display = 'none';
+        });
+        
+        sorted.forEach(({ item, z }) => {
+          const perspZ = Math.max(50, z + spacing);
+          const scale = fov / perspZ;
+          
+          const ratio = (item.originalWidth || 300) / (item.originalHeight || 200);
+          const baseH = 200;
+          const baseW = baseH * ratio;
+          const w = baseW * scale;
+          const h = baseH * scale;
+          
+          const screenX = cx - w / 2;
+          const screenY = cy - h / 2 - (scale - 1) * 20;
+          
+          const normZ = Math.max(0, z) / (totalDepth * 0.5);
+          const opacity = z < 0 ? Math.max(0, 1 + z / spacing) : Math.max(0.03, 1 - normZ * normZ);
+          const blur = normZ > 0.4 ? Math.min(6, (normZ - 0.4) * 10) : 0;
+          
+          const tiltX = normZ * 12;
+          
+          item.el.style.display = 'block';
+          item.el.style.left = `${screenX}px`;
+          item.el.style.top = `${screenY}px`;
+          item.el.style.width = `${w}px`;
+          item.el.style.height = `${h}px`;
+          item.el.style.opacity = opacity;
+          item.el.style.zIndex = Math.round(10000 - z);
+          item.el.style.filter = blur > 0 ? `blur(${blur.toFixed(1)}px)` : 'none';
+          item.el.style.borderRadius = '6px';
+          item.el.style.transform = `perspective(800px) rotateX(${tiltX}deg)`;
+        });
+        
+        const speed = Math.abs(this.queueAutoSpeed);
+        const dir = this.queueAutoSpeed >= 0 ? '▶' : '◀';
+        this.zoomIndicator.textContent = `${dir} ${speed.toFixed(1)}x`;
       }
       
       openDetail(imgData) {
@@ -1451,7 +2095,8 @@
         this.gridToggle.classList.toggle('active', this.isGridView);
         document.getElementById('grid-close').classList.toggle('active', this.isGridView);
         document.getElementById('grid-customization').classList.toggle('active', this.isGridView);
-        document.getElementById('main-custom-wrapper').style.display = this.isGridView ? 'none' : 'flex';
+        document.getElementById('custom-toggle').style.display = this.isGridView ? 'none' : 'flex';
+        if (this.isGridView) document.getElementById('custom-row').style.display = 'none';
         document.body.style.cursor = this.isGridView ? 'default' : 'grab';
       }
       
@@ -1485,21 +2130,60 @@
       
       setupMainCustomization() {
         const toggleBtn = document.getElementById('custom-toggle');
-        const panel = document.getElementById('main-customization');
+        const customRow = document.getElementById('custom-row');
+        this.customOpen = false;
         toggleBtn.addEventListener('click', () => {
-          panel.classList.toggle('active');
-          toggleBtn.classList.toggle('active');
+          this.customOpen = !this.customOpen;
+          customRow.style.display = this.customOpen ? 'flex' : 'none';
+          toggleBtn.classList.toggle('active', this.customOpen);
         });
+        this.buildCustomPanel();
+      }
+      
+      buildCustomPanel() {
+        const panel = document.getElementById('main-customization');
+        panel.innerHTML = '';
         
-        document.getElementById('main-size-slider').addEventListener('input', (e) => {
-          this.baseSize = parseInt(e.target.value);
-          this.updateItemSizes();
-        });
+        const sliders = [];
         
-        document.getElementById('main-spread-slider').addEventListener('input', (e) => {
-          const spread = parseInt(e.target.value);
-          this.spreadMultiplier = spread / 2000;
-          this.updateItemPositions();
+        if (this.viewMode === 'space') {
+          sliders.push(
+            { label: 'Size', min: 100, max: 400, value: this.baseSize || 220, handler: (v) => { this.baseSize = v; this.updateItemSizes(); }},
+            { label: 'Spread', min: 500, max: 3000, value: Math.round((this.spreadMultiplier || 1) * 2000), handler: (v) => { this.spreadMultiplier = v / 2000; this.updateItemPositions(); }}
+          );
+        } else if (this.viewMode === 'sphere') {
+          sliders.push(
+            { label: 'Size', min: 50, max: 200, value: this.sphereItemSize, handler: (v) => { this.sphereItemSize = v; }},
+            { label: 'Radius', min: 200, max: 1000, value: this.sphereRadius, handler: (v) => { this.sphereRadius = v; this.computeSpherePositions(); }}
+          );
+        } else if (this.viewMode === 'stream') {
+          sliders.push(
+            { label: 'Height', min: 120, max: 500, value: this.streamMaxH || 360, handler: (v) => { this.streamMaxH = v; }},
+            { label: 'Speed', min: 0, max: 100, value: Math.round(this.streamSpeed * 10), handler: (v) => { this.streamSpeed = v / 10; }},
+            { label: 'Gap', min: 4, max: 80, value: this.streamGap, handler: (v) => { this.streamGap = v; }}
+          );
+        } else if (this.viewMode === 'focus') {
+          sliders.push(
+            { label: 'Transition', min: 2, max: 15, value: Math.round(this.focusTransitionSpeed * 100), handler: (v) => { this.focusTransitionSpeed = v / 100; }}
+          );
+        } else if (this.viewMode === 'queue') {
+          sliders.push(
+            { label: 'Speed', min: 0, max: 80, value: Math.round(this.queueAutoSpeed * 10), handler: (v) => { this.queueAutoSpeed = v / 10; }},
+            { label: 'Spacing', min: 100, max: 600, value: this.queueSpacing, handler: (v) => { this.queueSpacing = v; }}
+          );
+        }
+        
+        sliders.forEach((s, i) => {
+          if (i > 0) {
+            const divider = document.createElement('div');
+            divider.className = 'custom-divider';
+            panel.appendChild(divider);
+          }
+          const group = document.createElement('div');
+          group.className = 'custom-group';
+          group.innerHTML = `<span class="custom-label">${s.label}</span><input type="range" class="custom-slider" min="${s.min}" max="${s.max}" value="${s.value}">`;
+          group.querySelector('input').addEventListener('input', (e) => s.handler(parseInt(e.target.value)));
+          panel.appendChild(group);
         });
       }
       
@@ -1535,6 +2219,7 @@
             const images = home === 1 ? home1Images : home2Images;
             await this.loadImages(images);
             this.createGalleryItems();
+            this.computeSpherePositions();
             this.createGridView();
             
             // Reset camera
