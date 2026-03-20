@@ -650,14 +650,22 @@
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
         </svg>
       </button>
-      <button class="user-avatar">
-        <img src="https://i.pravatar.cc/56?img=3" alt="User">
+      <button class="user-avatar" id="user-avatar-btn">
+        <img src="https://i.pravatar.cc/56?img=3" alt="User" id="user-avatar-img">
         <span class="dropdown-arrow">
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M7 10l5 5 5-5z"/>
           </svg>
         </span>
       </button>
+      <div class="user-dropdown" id="user-dropdown" style="display:none;position:absolute;top:50px;right:24px;background:rgba(20,20,20,0.98);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:8px 0;min-width:180px;z-index:1001;">
+        <div style="padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <div style="font-size:14px;color:#fff;font-weight:500;" id="dropdown-name"></div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px;" id="dropdown-email"></div>
+        </div>
+        <a href="profile.html" style="display:block;padding:10px 16px;color:rgba(255,255,255,0.7);text-decoration:none;font-size:13px;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='transparent'">Profile</a>
+        <button id="logout-btn" style="display:block;width:100%;text-align:left;padding:10px 16px;background:none;border:none;color:rgba(255,80,80,0.8);font-size:13px;font-family:inherit;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='transparent'">Log out</button>
+      </div>
     </div>
   </nav>
 
@@ -881,6 +889,47 @@
         reader.readAsDataURL(file);
       });
       closeUploadModal();
+    });
+  </script>
+
+  <script type="module">
+    import { requireAuth } from './assets/js/auth-guard.js';
+    import { logout } from './assets/js/auth.js';
+
+    const user = await requireAuth();
+
+    // Update avatar
+    const avatarImg = document.getElementById('user-avatar-img');
+    const dropdownName = document.getElementById('dropdown-name');
+    const dropdownEmail = document.getElementById('dropdown-email');
+
+    if (user.photoURL) {
+      avatarImg.src = user.photoURL;
+    } else {
+      avatarImg.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || 'U') + '&background=333&color=fff&size=56';
+    }
+
+    dropdownName.textContent = user.displayName || 'User';
+    dropdownEmail.textContent = user.email;
+
+    // Dropdown toggle
+    const avatarBtn = document.getElementById('user-avatar-btn');
+    const dropdown = document.getElementById('user-dropdown');
+
+    avatarBtn.addEventListener('click', () => {
+      dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!avatarBtn.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.style.display = 'none';
+      }
+    });
+
+    // Logout
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      await logout();
+      window.location.href = 'index.html';
     });
   </script>
 </body>

@@ -729,9 +729,9 @@
   
   <div class="logo"><a href="index.html"><img src="logo2.png" alt="ARTASAS"></a></div>
   
-  <div class="auth-links">
-    <a href="home_logada.html" class="auth-link">Log in</a>
-    <a href="home_logada.html" class="auth-link">Sign up</a>
+  <div class="auth-links" id="auth-links">
+    <a href="login.html" class="auth-link">Log in</a>
+    <a href="signup.html" class="auth-link">Sign up</a>
   </div>
 
   
@@ -2229,6 +2229,23 @@
     }
     
     document.addEventListener('DOMContentLoaded', () => new Gallery());
+  </script>
+
+  <script type="module">
+    import { onAuth, logout } from './assets/js/auth.js';
+
+    onAuth((user) => {
+      const authLinks = document.getElementById('auth-links');
+      if (user) {
+        const avatar = user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || 'U') + '&background=333&color=fff&size=32';
+        authLinks.innerHTML = `
+          <a href="home_logada.html" class="auth-link">${user.displayName || 'Home'}</a>
+          <a href="home_logada.html" style="width:28px;height:28px;border-radius:50%;overflow:hidden;display:block;">
+            <img src="${avatar}" style="width:100%;height:100%;object-fit:cover;" alt="">
+          </a>
+        `;
+      }
+    });
   </script>
 </body>
 </html>
