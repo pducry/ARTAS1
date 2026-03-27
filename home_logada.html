@@ -650,7 +650,7 @@
         </svg>
       </button>
       <button class="user-avatar" id="user-avatar-btn">
-        <img src="https://i.pravatar.cc/56?img=3" alt="User" id="user-avatar-img">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23333'/%3E%3Ctext x='12' y='16' text-anchor='middle' fill='%23999' font-size='12' font-family='sans-serif'%3E%3F%3C/text%3E%3C/svg%3E" alt="User" id="user-avatar-img">
         <span class="dropdown-arrow">
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M7 10l5 5 5-5z"/>
@@ -738,11 +738,24 @@
     const user = await requireAuth();
 
     // ── User UI ──
+    function generateAvatar(name, size = 56) {
+      const initial = (name || '?').charAt(0).toUpperCase();
+      return `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" rx="${size/2}" fill="#333"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#ccc" font-size="${size * 0.45}" font-family="sans-serif" font-weight="500">${initial}</text></svg>`)}`;
+    }
+
     const avatarImg = document.getElementById('user-avatar-img');
     const dropdownName = document.getElementById('dropdown-name');
     const dropdownEmail = document.getElementById('dropdown-email');
-    const avatarUrl = user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || 'U') + '&background=333&color=fff&size=56';
-    avatarImg.src = avatarUrl;
+
+    if (user.photoURL) {
+      const testImg = new Image();
+      testImg.onload = () => { avatarImg.src = user.photoURL; };
+      testImg.onerror = () => { avatarImg.src = generateAvatar(user.displayName); };
+      testImg.src = user.photoURL;
+    } else {
+      avatarImg.src = generateAvatar(user.displayName);
+    }
+
     dropdownName.textContent = user.displayName || 'User';
     dropdownEmail.textContent = user.email;
 

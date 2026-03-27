@@ -2234,16 +2234,26 @@
   <script type="module">
     import { onAuth, logout } from './assets/js/auth.js';
 
+    function generateAvatar(name, size = 32) {
+      const initial = (name || '?').charAt(0).toUpperCase();
+      return `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" rx="${size/2}" fill="#333"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#ccc" font-size="${size * 0.45}" font-family="sans-serif" font-weight="500">${initial}</text></svg>`)}`;
+    }
+
     onAuth((user) => {
       const authLinks = document.getElementById('auth-links');
       if (user) {
-        const avatar = user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || 'U') + '&background=333&color=fff&size=32';
+        const fallback = generateAvatar(user.displayName);
         authLinks.innerHTML = `
           <a href="home_logada.html" class="auth-link">${user.displayName || 'Home'}</a>
           <a href="home_logada.html" style="width:28px;height:28px;border-radius:50%;overflow:hidden;display:block;">
-            <img src="${avatar}" style="width:100%;height:100%;object-fit:cover;" alt="">
+            <img id="index-avatar" src="${fallback}" style="width:100%;height:100%;object-fit:cover;" alt="">
           </a>
         `;
+        if (user.photoURL) {
+          const img = new Image();
+          img.onload = () => { document.getElementById('index-avatar').src = user.photoURL; };
+          img.src = user.photoURL;
+        }
       }
     });
   </script>
