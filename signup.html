@@ -254,7 +254,17 @@
   </div>
 
   <script type="module">
-    import { registerWithEmail, loginWithGoogle, onAuth } from './assets/js/auth.js';
+    import { registerWithEmail, loginWithGoogle, handleGoogleRedirect, onAuth } from './assets/js/auth.js';
+
+    // Handle redirect result (if coming back from Google redirect)
+    try {
+      const result = await handleGoogleRedirect();
+      if (result) {
+        window.location.href = 'home_logada.html';
+      }
+    } catch (err) {
+      console.error('Redirect error:', err);
+    }
 
     // If already logged in, redirect
     onAuth((user) => {
@@ -264,6 +274,7 @@
     const form = document.getElementById('signup-form');
     const errorMsg = document.getElementById('error-msg');
     const submitBtn = document.getElementById('submit-btn');
+    const googleBtn = document.getElementById('google-btn');
 
     function showError(msg) {
       errorMsg.textContent = msg;
@@ -299,14 +310,29 @@
     });
 
     // Google signup
-    document.getElementById('google-btn').addEventListener('click', async () => {
+    googleBtn.addEventListener('click', async () => {
       hideError();
+      googleBtn.disabled = true;
+      googleBtn.style.opacity = '0.6';
+
       try {
         await loginWithGoogle();
       } catch (err) {
-        if (err.code !== 'auth/popup-closed-by-user') {
-          showError('Google sign-in failed. Please try again.');
+        console.error('Google sign-in error:', err.code, err.message);
+        googleBtn.disabled = false;
+        googleBtn.style.opacity = '';
+
+        if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+          return;
         }
+
+        const messages = {
+          'auth/unauthorized-domain': 'This domain is not authorized. Add it in Firebase Console > Authentication > Settings > Authorized domains.',
+          'auth/popup-blocked': 'Popup was blocked. Trying redirect instead...',
+          'auth/internal-error': 'Authentication service error. Make sure Google sign-in is enabled in Firebase Console.',
+          'auth/operation-not-allowed': 'Google sign-in is not enabled. Enable it in Firebase Console > Authentication > Sign-in method.'
+        };
+        showError(messages[err.code] || `Google sign-in failed (${err.code || 'unknown'}). ${err.message || ''}`);
       }
     });
   </script>

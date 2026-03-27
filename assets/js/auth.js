@@ -1,7 +1,7 @@
 import {
   auth, db, googleProvider,
   onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword,
-  signInWithPopup, signOut, updateProfile,
+  signInWithPopup, signInWithRedirect, getRedirectResult, signOut, updateProfile,
   doc, setDoc, getDoc, serverTimestamp
 } from './firebase-config.js';
 
@@ -18,14 +18,47 @@ export async function registerWithEmail(email, password, displayName) {
   return cred;
 }
 
-// Sign in with Google
+// Sign in with Google - tries popup first, falls back to redirect
 export async function loginWithGoogle() {
-  const cred = await signInWithPopup(auth, googleProvider);
-  const profileDoc = await getDoc(doc(db, 'users', cred.user.uid));
-  if (!profileDoc.exists()) {
-    await createUserProfile(cred.user);
+  try {
+    const cred = await signInWithPopup(auth, googleProvider);
+    await ensureUserProfile(cred.user);
+    return cred;
+  } catch (err) {
+    // If popup is blocked or fails, use redirect
+    if (err.code === 'auth/popup-blocked' ||
+        err.code === 'auth/popup-closed-by-user' ||
+        err.code === 'auth/cancelled-popup-request') {
+      throw err; // Let the UI handle these
+    }
+    // For unauthorized-domain or other errors, try redirect
+    console.warn('Popup failed, trying redirect:', err.code, err.message);
+    await signInWithRedirect(auth, googleProvider);
+    return null; // Page will redirect
   }
-  return cred;
+}
+
+// Handle redirect result (call on page load)
+export async function handleGoogleRedirect() {
+  try {
+    const result = await getRedirectResult(auth);
+    if (result && result.user) {
+      await ensureUserProfile(result.user);
+      return result;
+    }
+  } catch (err) {
+    console.error('Redirect result error:', err.code, err.message);
+    throw err;
+  }
+  return null;
+}
+
+// Ensure user profile exists in Firestore
+async function ensureUserProfile(user) {
+  const profileDoc = await getDoc(doc(db, 'users', user.uid));
+  if (!profileDoc.exists()) {
+    await createUserProfile(user);
+  }
 }
 
 // Sign out
