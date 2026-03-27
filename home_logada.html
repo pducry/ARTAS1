@@ -691,15 +691,82 @@
     </div>
   </div>
 
+  <!-- Save to Board Modal -->
+  <div class="upload-overlay" id="board-overlay">
+    <div class="upload-modal" style="max-width:420px;">
+      <div class="upload-modal-header">
+        <span class="upload-modal-title">Save to board</span>
+        <button class="upload-modal-close" id="board-close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div id="board-list" style="max-height:300px;overflow-y:auto;"></div>
+      <div style="margin-top:16px;border-top:1px solid rgba(255,255,255,0.08);padding-top:16px;">
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="new-board-name" class="search-input" placeholder="New board name" style="flex:1;padding:10px 14px;border-radius:10px;">
+          <button id="create-board-btn" style="padding:10px 18px;background:#fff;border:none;border-radius:10px;color:#000;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;">Create</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Main Content -->
   <main class="main-content">
     <div class="feed-container">
+      <div id="feed-loading" style="text-align:center;padding:60px 0;color:rgba(255,255,255,0.4);font-size:14px;">Loading feed...</div>
       <div class="feed-grid" id="feed-grid"></div>
     </div>
   </main>
 
-  <script>
-    const images = [
+  <style>
+    .board-option { display:flex;align-items:center;gap:12px;padding:10px 16px;cursor:pointer;transition:background 0.15s;border-radius:8px; }
+    .board-option:hover { background:rgba(255,255,255,0.06); }
+    .board-cover { width:48px;height:48px;border-radius:8px;overflow:hidden;background:#1a1a1a;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:1px; }
+    .board-cover img { width:100%;height:100%;object-fit:cover; }
+    .board-cover .empty { background:rgba(255,255,255,0.04); }
+    .board-info { flex:1; }
+    .board-info .name { font-size:14px;color:#fff;font-weight:500; }
+    .board-info .count { font-size:12px;color:rgba(255,255,255,0.4); }
+    .upload-progress { position:absolute;bottom:0;left:0;height:3px;background:#fff;border-radius:0 0 20px 20px;transition:width 0.3s ease; }
+  </style>
+
+  <script type="module">
+    import { requireAuth } from './assets/js/auth-guard.js';
+    import { logout } from './assets/js/auth.js';
+    import { uploadImage } from './assets/js/storage.js';
+    import { createArtwork, getArtworks, saveArtwork, unsaveArtwork, getUserBoards, createBoard, addArtworkToBoard } from './assets/js/db.js';
+
+    const user = await requireAuth();
+
+    // ── User UI ──
+    const avatarImg = document.getElementById('user-avatar-img');
+    const dropdownName = document.getElementById('dropdown-name');
+    const dropdownEmail = document.getElementById('dropdown-email');
+    const avatarUrl = user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || 'U') + '&background=333&color=fff&size=56';
+    avatarImg.src = avatarUrl;
+    dropdownName.textContent = user.displayName || 'User';
+    dropdownEmail.textContent = user.email;
+
+    // Dropdown
+    const avatarBtn = document.getElementById('user-avatar-btn');
+    const dropdown = document.getElementById('user-dropdown');
+    avatarBtn.addEventListener('click', () => {
+      dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    });
+    document.addEventListener('click', (e) => {
+      if (!avatarBtn.contains(e.target) && !dropdown.contains(e.target)) dropdown.style.display = 'none';
+    });
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      await logout();
+      window.location.href = 'index.html';
+    });
+
+    // ── Feed ──
+    const feedGrid = document.getElementById('feed-grid');
+    const feedLoading = document.getElementById('feed-loading');
+
+    // Local fallback images
+    const localImages = [
       '025ce04a-753c-4ac0-90fc-724966e35fa5.jpeg', '03cdbf2e8d84091b535378b6f3e28b7d.jpg',
       '04d800fd-d969-41e8-adf8-64ebf6eb37e1.jpeg', '16fab7bb-6495-4d45-b25d-494055a4b33c.jpeg',
       '2a3335cdc27bdc677f89863667c354dc.jpg', '34170add96db0159709f82efb83f7c39.jpg',
@@ -708,76 +775,102 @@
       '6e89fb39-3096-4e92-9f32-e6101f6ff825.jpeg', '6f53ae36-505b-440f-affe-0cc0cf9e8529.jpeg',
       '71097654-382a-46ec-a3d4-2478ae087251.jpeg', '74d2981eb2e8400526272f86c55bc5d6.jpg',
       '965d8b1dcc482979f0329b574cfd1108.jpg', '9d4b466353bc2ec699b8062a163db00c.jpg',
-      '9e297d9e1365fb44836fb54ea76fe408.jpg', 'a12121b22ebf2f3dce8adf5469439113.jpg',
-      'acf8fea5-220f-445e-8785-2ddac7bf4640.jpeg', 'adfa35385556cdca00bcfb6014cf8e77.jpg',
-      'art.jpeg', 'b4a0ccf623676d6f3e889f1d4757ed4c.jpg',
-      'b54c9dba-2d38-4b15-b7b0-a2557faddfd5.jpeg', 'b77a8587faa5df05f683aa53ffb395f5.jpg',
-      'c2edbde2-2f5b-49f5-9349-174472851ef5.jpeg', 'c9d73c80-5b88-4cb9-95c5-8e126dceb88b.jpeg',
-      'd85e35fb-751b-4344-8bf3-e4851c8ddd43.jpeg', 'e08063e1-19be-413f-9acc-10c3cced32f4.jpeg',
-      'e791c2d7cc6d7d583763189e0e8c4fc7.jpg', 'e79b0b372fc86ae378931ecd65d4a9f6.jpg',
-      'e969743e-8178-498c-85b6-365b2a2080a5.jpeg', 'ee8684761fe56f1891ac18dc859623c0.jpg',
-      'f0118967-4c43-4fd1-80a7-a4d855a14f2c.jpeg', 'f6c59438-1a4a-47f2-a093-fe18e1bad0da.jpeg',
-      'fe29348e36a36c2c99edb58821330c79.jpg', 'FJanx6YWYAo8KW9.jpeg',
-      'G__9DIUbcAAt_cy.jpeg', 'G__MaODbEAQ7Rn3.jpeg', 'G_6ATQ2XoAA95dV.jpeg',
-      'G_758bdWwAATy_9.jpeg', 'G_Cw8iBW0AAcDiV.jpeg', 'G_NWn8FaIAEO25I.jpeg',
-      'G_vet9yWcAARLKT.jpeg', 'G046ZVHWkAABcQ1.jpeg', 'G06JwjsWQAAw4Y5.jpeg',
+      'G__9DIUbcAAt_cy.jpeg', 'G_6ATQ2XoAA95dV.jpeg', 'G_Cw8iBW0AAcDiV.jpeg',
       'G2naqcabIAEp8jE.jpeg', 'G36PhxlWcAAxPr5.jpeg', 'G5BFNOzWYAAuMHi.jpeg',
-      'G8lehBTW8AA6C5u.jpeg', 'G93cWkQXcAAXPcr.jpeg', 'GLnfiyfWQAItm-O.jpeg',
       'Gz7G_5rXEAAc7mt.jpeg', 'GzHnXerWoAAp5lI.jpeg', 'HAD4TeTbAAA7suu.jpeg',
       'HAE4mByWMAAAzbd.jpeg', 'HAGeCV-XkAAVCu2.jpeg', 'HAOPIy1WAAA-j5X.jpeg', 'TRUST.png'
     ];
 
-    const authors = [
-      { name: 'Alex', avatar: 'https://i.pravatar.cc/56?img=3' },
-      { name: 'Jaime Siux', avatar: 'https://i.pravatar.cc/56?img=1' },
-      { name: 'Pame', avatar: 'https://i.pravatar.cc/56?img=5' },
-      { name: 'Studio', avatar: 'https://i.pravatar.cc/56?img=8' },
-      { name: 'Creative Co', avatar: 'https://i.pravatar.cc/56?img=12' }
-    ];
+    function createFeedItem(artwork) {
+      const isFirestore = !!artwork.id;
+      const imgSrc = artwork.imageUrl || artwork;
+      const authorName = artwork.uploaderName || '';
+      const authorAvatar = artwork.uploaderAvatar || '';
+      const isSaved = isFirestore && artwork.savedBy && artwork.savedBy.includes(user.uid);
 
-    const feedGrid = document.getElementById('feed-grid');
-
-    // Shuffle images for variety
-    const shuffledImages = [...images].sort(() => Math.random() - 0.5);
-
-    shuffledImages.forEach((src, index) => {
-      const author = authors[index % authors.length];
-      
       const item = document.createElement('div');
       item.className = 'feed-item';
+      if (isFirestore) item.dataset.artworkId = artwork.id;
+
       item.innerHTML = `
-        <img src="${src}" alt="Image" loading="lazy">
+        <img src="${imgSrc}" alt="Image" loading="lazy">
         <div class="feed-item-overlay"></div>
-        <button class="feed-save-btn">Save</button>
+        <div style="position:absolute;top:12px;right:12px;display:flex;gap:6px;opacity:0;transform:translateY(-4px);transition:all 0.2s ease;" class="feed-actions">
+          <button class="feed-save-btn" style="position:static;opacity:1;transform:none;${isSaved ? 'background:#111;' : ''}">${isSaved ? 'Saved' : 'Save'}</button>
+          ${isFirestore ? '<button class="feed-save-btn feed-board-btn" style="position:static;opacity:1;transform:none;background:rgba(0,0,0,0.6);padding:8px 10px;" title="Save to board"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M12 5v14M5 12h14"/></svg></button>' : ''}
+        </div>
+        ${authorName ? `
         <div class="feed-item-info">
           <div class="feed-author">
-            <img src="${author.avatar}" alt="${author.name}">
-            <span>${author.name}</span>
+            ${authorAvatar ? `<img src="${authorAvatar}" alt="${authorName}">` : ''}
+            <span>${authorName}</span>
           </div>
-        </div>
+        </div>` : ''}
       `;
 
-      item.addEventListener('click', (e) => {
-        if (!e.target.closest('.feed-save-btn')) {
-          window.location.href = `index.html?image=${encodeURIComponent(src)}`;
+      // Show actions on hover
+      item.addEventListener('mouseenter', () => {
+        item.querySelector('.feed-actions').style.opacity = '1';
+        item.querySelector('.feed-actions').style.transform = 'translateY(0)';
+      });
+      item.addEventListener('mouseleave', () => {
+        item.querySelector('.feed-actions').style.opacity = '0';
+        item.querySelector('.feed-actions').style.transform = 'translateY(-4px)';
+      });
+
+      // Save/unsave
+      const saveBtn = item.querySelector('.feed-save-btn');
+      saveBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (!isFirestore) return;
+        const artId = artwork.id;
+        if (saveBtn.textContent === 'Saved') {
+          await unsaveArtwork(artId);
+          saveBtn.textContent = 'Save';
+          saveBtn.style.background = '#e60023';
+        } else {
+          await saveArtwork(artId);
+          saveBtn.textContent = 'Saved';
+          saveBtn.style.background = '#111';
         }
       });
 
-      const saveBtn = item.querySelector('.feed-save-btn');
-      saveBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        saveBtn.textContent = 'Saved!';
-        saveBtn.style.background = '#111';
-        setTimeout(() => {
-          saveBtn.textContent = 'Save';
-          saveBtn.style.background = '';
-        }, 1500);
-      });
+      // Save to board
+      const boardBtn = item.querySelector('.feed-board-btn');
+      if (boardBtn) {
+        boardBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openBoardModal(artwork.id, imgSrc);
+        });
+      }
 
-      feedGrid.appendChild(item);
-    });
+      return item;
+    }
 
-    // Nav links active state
+    async function loadFeed() {
+      try {
+        const artworks = await getArtworks(60);
+        feedLoading.style.display = 'none';
+
+        if (artworks.length > 0) {
+          artworks.forEach(art => feedGrid.appendChild(createFeedItem(art)));
+        }
+
+        // Add local images as fallback/filler
+        const shuffled = [...localImages].sort(() => Math.random() - 0.5);
+        shuffled.forEach(src => feedGrid.appendChild(createFeedItem(src)));
+      } catch (err) {
+        console.error('Feed load error:', err);
+        feedLoading.textContent = 'Could not load feed from server. Showing local gallery.';
+        setTimeout(() => { feedLoading.style.display = 'none'; }, 2000);
+        const shuffled = [...localImages].sort(() => Math.random() - 0.5);
+        shuffled.forEach(src => feedGrid.appendChild(createFeedItem(src)));
+      }
+    }
+
+    loadFeed();
+
+    // ── Nav links ──
     document.querySelectorAll('.nav-link').forEach(link => {
       link.addEventListener('click', (e) => {
         if (link.getAttribute('href') === '#') e.preventDefault();
@@ -786,7 +879,7 @@
       });
     });
 
-    // Upload functionality
+    // ── Upload ──
     const uploadOverlay = document.getElementById('upload-overlay');
     const uploadClose = document.getElementById('upload-close');
     const uploadDropzone = document.getElementById('upload-dropzone');
@@ -798,11 +891,12 @@
 
     createBtn.addEventListener('click', () => uploadOverlay.classList.add('active'));
     uploadClose.addEventListener('click', () => closeUploadModal());
-    uploadOverlay.addEventListener('click', (e) => {
-      if (e.target === uploadOverlay) closeUploadModal();
-    });
+    uploadOverlay.addEventListener('click', (e) => { if (e.target === uploadOverlay) closeUploadModal(); });
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && uploadOverlay.classList.contains('active')) closeUploadModal();
+      if (e.key === 'Escape') {
+        if (boardOverlay.classList.contains('active')) closeBoardModal();
+        else if (uploadOverlay.classList.contains('active')) closeUploadModal();
+      }
     });
 
     function closeUploadModal() {
@@ -810,13 +904,12 @@
       pendingFiles = [];
       uploadPreviewGrid.innerHTML = '';
       uploadSubmitBtn.classList.remove('ready');
+      uploadSubmitBtn.textContent = 'Upload Images';
+      uploadSubmitBtn.disabled = false;
     }
 
     ['dragenter', 'dragover'].forEach(evt => {
-      uploadDropzone.addEventListener(evt, (e) => {
-        e.preventDefault();
-        uploadDropzone.classList.add('dragover');
-      });
+      uploadDropzone.addEventListener(evt, (e) => { e.preventDefault(); uploadDropzone.classList.add('dragover'); });
     });
     ['dragleave', 'drop'].forEach(evt => {
       uploadDropzone.addEventListener(evt, () => uploadDropzone.classList.remove('dragover'));
@@ -824,8 +917,7 @@
 
     uploadDropzone.addEventListener('drop', (e) => {
       e.preventDefault();
-      const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/'));
-      addFiles(files);
+      addFiles([...e.dataTransfer.files].filter(f => f.type.startsWith('image/')));
     });
 
     uploadInput.addEventListener('change', () => {
@@ -841,10 +933,7 @@
         reader.onload = (e) => {
           const item = document.createElement('div');
           item.className = 'upload-preview-item';
-          item.innerHTML = `
-            <img src="${e.target.result}" alt="">
-            <button class="upload-preview-remove">&times;</button>
-          `;
+          item.innerHTML = `<img src="${e.target.result}" alt=""><button class="upload-preview-remove">&times;</button>`;
           item.querySelector('.upload-preview-remove').addEventListener('click', () => {
             const idx = [...uploadPreviewGrid.children].indexOf(item);
             pendingFiles.splice(idx, 1);
@@ -858,78 +947,117 @@
       uploadSubmitBtn.classList.toggle('ready', pendingFiles.length > 0);
     }
 
-    uploadSubmitBtn.addEventListener('click', () => {
+    // Real upload to Firebase Storage + Firestore
+    uploadSubmitBtn.addEventListener('click', async () => {
       if (pendingFiles.length === 0) return;
-      pendingFiles.forEach(file => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const author = authors[Math.floor(Math.random() * authors.length)];
-          const item = document.createElement('div');
-          item.className = 'feed-item';
-          item.innerHTML = `
-            <img src="${e.target.result}" alt="Uploaded" loading="lazy">
-            <div class="feed-item-overlay"></div>
-            <button class="feed-save-btn">Save</button>
-            <div class="feed-item-info">
-              <div class="feed-author">
-                <img src="${author.avatar}" alt="${author.name}">
-                <span>${author.name}</span>
-              </div>
-            </div>
-          `;
-          const saveBtn = item.querySelector('.feed-save-btn');
-          saveBtn.addEventListener('click', (ev) => {
-            ev.stopPropagation();
-            saveBtn.textContent = 'Saved!';
-            saveBtn.style.background = '#111';
-            setTimeout(() => { saveBtn.textContent = 'Save'; saveBtn.style.background = ''; }, 1500);
+      uploadSubmitBtn.disabled = true;
+      const total = pendingFiles.length;
+      let done = 0;
+
+      for (const file of pendingFiles) {
+        try {
+          uploadSubmitBtn.textContent = `Uploading ${done + 1}/${total}...`;
+          const { url } = await uploadImage(file);
+          const artworkId = await createArtwork({
+            imageUrl: url,
+            title: file.name.replace(/\.[^.]+$/, ''),
+            tags: []
           });
-          feedGrid.prepend(item);
-        };
-        reader.readAsDataURL(file);
-      });
+          const artwork = {
+            id: artworkId,
+            imageUrl: url,
+            uploaderName: user.displayName || '',
+            uploaderAvatar: user.photoURL || '',
+            savedBy: []
+          };
+          feedGrid.prepend(createFeedItem(artwork));
+          done++;
+        } catch (err) {
+          console.error('Upload failed:', err);
+        }
+      }
+
       closeUploadModal();
     });
-  </script>
 
-  <script type="module">
-    import { requireAuth } from './assets/js/auth-guard.js';
-    import { logout } from './assets/js/auth.js';
+    // ── Board Modal ──
+    const boardOverlay = document.getElementById('board-overlay');
+    const boardClose = document.getElementById('board-close');
+    const boardList = document.getElementById('board-list');
+    const newBoardInput = document.getElementById('new-board-name');
+    const createBoardBtn = document.getElementById('create-board-btn');
+    let currentArtworkId = null;
+    let currentImageUrl = null;
 
-    const user = await requireAuth();
+    boardClose.addEventListener('click', closeBoardModal);
+    boardOverlay.addEventListener('click', (e) => { if (e.target === boardOverlay) closeBoardModal(); });
 
-    // Update avatar
-    const avatarImg = document.getElementById('user-avatar-img');
-    const dropdownName = document.getElementById('dropdown-name');
-    const dropdownEmail = document.getElementById('dropdown-email');
-
-    if (user.photoURL) {
-      avatarImg.src = user.photoURL;
-    } else {
-      avatarImg.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || 'U') + '&background=333&color=fff&size=56';
+    function closeBoardModal() {
+      boardOverlay.classList.remove('active');
+      currentArtworkId = null;
+      currentImageUrl = null;
     }
 
-    dropdownName.textContent = user.displayName || 'User';
-    dropdownEmail.textContent = user.email;
+    async function openBoardModal(artworkId, imageUrl) {
+      currentArtworkId = artworkId;
+      currentImageUrl = imageUrl;
+      boardOverlay.classList.add('active');
+      boardList.innerHTML = '<div style="padding:16px;text-align:center;color:rgba(255,255,255,0.4);font-size:13px;">Loading boards...</div>';
 
-    // Dropdown toggle
-    const avatarBtn = document.getElementById('user-avatar-btn');
-    const dropdown = document.getElementById('user-dropdown');
-
-    avatarBtn.addEventListener('click', () => {
-      dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-    });
-
-    document.addEventListener('click', (e) => {
-      if (!avatarBtn.contains(e.target) && !dropdown.contains(e.target)) {
-        dropdown.style.display = 'none';
+      try {
+        const boards = await getUserBoards(user.uid);
+        boardList.innerHTML = '';
+        if (boards.length === 0) {
+          boardList.innerHTML = '<div style="padding:16px;text-align:center;color:rgba(255,255,255,0.4);font-size:13px;">No boards yet. Create one below.</div>';
+        } else {
+          boards.forEach(board => {
+            const el = document.createElement('div');
+            el.className = 'board-option';
+            const covers = (board.coverUrls || []).slice(0, 4);
+            el.innerHTML = `
+              <div class="board-cover">
+                ${[0,1,2,3].map(i => covers[i] ? `<img src="${covers[i]}" alt="">` : '<div class="empty"></div>').join('')}
+              </div>
+              <div class="board-info">
+                <div class="name">${board.name}</div>
+                <div class="count">${board.artworkCount || 0} images</div>
+              </div>
+            `;
+            el.addEventListener('click', async () => {
+              try {
+                await addArtworkToBoard(board.id, currentArtworkId, currentImageUrl);
+                closeBoardModal();
+              } catch (err) {
+                console.error('Save to board failed:', err);
+              }
+            });
+            boardList.appendChild(el);
+          });
+        }
+      } catch (err) {
+        boardList.innerHTML = '<div style="padding:16px;text-align:center;color:#ff6b6b;font-size:13px;">Could not load boards.</div>';
       }
-    });
+    }
 
-    // Logout
-    document.getElementById('logout-btn').addEventListener('click', async () => {
-      await logout();
-      window.location.href = 'index.html';
+    createBoardBtn.addEventListener('click', async () => {
+      const name = newBoardInput.value.trim();
+      if (!name) return;
+      createBoardBtn.disabled = true;
+      createBoardBtn.textContent = '...';
+
+      try {
+        const boardId = await createBoard(name);
+        if (currentArtworkId) {
+          await addArtworkToBoard(boardId, currentArtworkId, currentImageUrl);
+        }
+        newBoardInput.value = '';
+        closeBoardModal();
+      } catch (err) {
+        console.error('Create board failed:', err);
+      } finally {
+        createBoardBtn.disabled = false;
+        createBoardBtn.textContent = 'Create';
+      }
     });
   </script>
 </body>

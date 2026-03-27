@@ -39,7 +39,12 @@ async function createUserProfile(user) {
     displayName: user.displayName || '',
     email: user.email,
     avatarUrl: user.photoURL || '',
+    username: '',
     bio: '',
+    imageCount: 0,
+    boardCount: 0,
+    followerCount: 0,
+    followingCount: 0,
     createdAt: serverTimestamp()
   });
 }

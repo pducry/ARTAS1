@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="ARTASAS - Board">
+  <meta name="theme-color" content="#0a0a0f">
+  <title>Board — ARTASAS</title>
+  <link rel="icon" type="image/png" href="FAVICON.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      min-height: 100%;
+      background: #000;
+      color: #e0e0e0;
+      font-family: 'Work Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(1px 1px at 20px 30px, rgba(255,255,255,0.3), transparent),
+        radial-gradient(1px 1px at 40px 70px, rgba(255,255,255,0.2), transparent),
+        radial-gradient(1px 1px at 50px 160px, rgba(255,255,255,0.3), transparent);
+      background-repeat: repeat;
+      background-size: 200px 200px;
+      pointer-events: none;
+      opacity: 0.6;
+    }
+
+    .logo { position: fixed; top: 24px; left: 50%; transform: translateX(-50%); z-index: 100; }
+    .logo a { display: block; opacity: 0.7; transition: opacity 0.3s; }
+    .logo a:hover { opacity: 1; }
+    .logo img { height: 20px; width: auto; }
+
+    .back-btn {
+      position: fixed; top: 24px; left: 24px; z-index: 100;
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 18px; background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px;
+      color: rgba(255, 255, 255, 0.5); font-size: 13px;
+      text-decoration: none; cursor: pointer; transition: all 0.3s ease;
+    }
+    .back-btn:hover { border-color: rgba(255, 255, 255, 0.25); color: rgba(255, 255, 255, 0.8); }
+    .back-btn svg { width: 18px; height: 18px; }
+
+    .board-container { padding: 100px 24px 60px; }
+
+    .board-header {
+      text-align: center;
+      margin-bottom: 48px;
+      padding-bottom: 32px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .board-title { font-size: 22px; font-weight: 500; color: #fff; margin-bottom: 8px; }
+    .board-meta { font-size: 13px; color: rgba(255, 255, 255, 0.4); }
+
+    .board-actions {
+      display: flex; justify-content: center; gap: 8px; margin-top: 16px;
+    }
+
+    .board-action-btn {
+      padding: 8px 16px; background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px;
+      color: rgba(255, 255, 255, 0.6); font-family: inherit; font-size: 12px;
+      cursor: pointer; transition: all 0.2s ease;
+    }
+    .board-action-btn:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+    .board-action-btn.danger:hover { background: rgba(255, 80, 80, 0.15); color: #ff6b6b; border-color: rgba(255, 80, 80, 0.3); }
+
+    .images-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .grid-item {
+      position: relative; aspect-ratio: 1; border-radius: 6px;
+      overflow: hidden; background: #0a0a0a; cursor: pointer;
+      transition: opacity 0.3s ease;
+    }
+    .grid-item:hover { opacity: 0.85; }
+    .grid-item img { width: 100%; height: 100%; object-fit: cover; }
+
+    .empty-state {
+      text-align: center; padding: 80px 24px;
+      color: rgba(255, 255, 255, 0.3); font-size: 14px;
+    }
+
+    @media (max-width: 768px) {
+      .board-container { padding: 90px 16px 40px; }
+      .images-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="logo"><a href="index.html"><img src="logo2.png" alt="ARTASAS"></a></div>
+
+  <a href="javascript:history.back()" class="back-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Back
+  </a>
+
+  <div class="board-container">
+    <div id="loading" style="text-align:center;padding:100px 0;color:rgba(255,255,255,0.4);font-size:14px;">Loading board...</div>
+
+    <div class="board-header" id="board-header" style="display:none;">
+      <h1 class="board-title" id="board-title"></h1>
+      <p class="board-meta" id="board-meta"></p>
+      <div class="board-actions" id="board-actions"></div>
+    </div>
+
+    <div class="images-grid" id="images-grid"></div>
+  </div>
+
+  <script type="module">
+    import { checkAuth } from './assets/js/auth-guard.js';
+    import { getBoard, getBoardArtworks, deleteBoard, removeArtworkFromBoard } from './assets/js/db.js';
+
+    const user = await checkAuth();
+    if (!user) { window.location.href = 'login.html'; return; }
+
+    const params = new URLSearchParams(window.location.search);
+    const boardId = params.get('id');
+    if (!boardId) { document.getElementById('loading').textContent = 'No board specified.'; return; }
+
+    const loading = document.getElementById('loading');
+    const header = document.getElementById('board-header');
+    const grid = document.getElementById('images-grid');
+
+    try {
+      const board = await getBoard(boardId);
+      if (!board) { loading.textContent = 'Board not found.'; return; }
+
+      loading.style.display = 'none';
+      header.style.display = '';
+      document.getElementById('board-title').textContent = board.name;
+      document.getElementById('board-meta').textContent = `${board.artworkCount || 0} images`;
+      document.title = board.name + ' — ARTASAS';
+
+      // Owner actions
+      if (board.ownerId === user.uid) {
+        const actions = document.getElementById('board-actions');
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'board-action-btn danger';
+        deleteBtn.textContent = 'Delete Board';
+        deleteBtn.addEventListener('click', async () => {
+          if (confirm('Delete this board? Images will not be deleted.')) {
+            await deleteBoard(boardId);
+            window.location.href = 'profile.html';
+          }
+        });
+        actions.appendChild(deleteBtn);
+      }
+
+      // Load artworks
+      const artworks = await getBoardArtworks(boardId);
+      if (artworks.length === 0) {
+        grid.innerHTML = '<div class="empty-state">This board is empty.</div>';
+      } else {
+        artworks.forEach(art => {
+          const item = document.createElement('div');
+          item.className = 'grid-item';
+          item.innerHTML = `<img src="${art.imageUrl}" alt="${art.title || ''}" loading="lazy">`;
+          grid.appendChild(item);
+        });
+      }
+    } catch (err) {
+      console.error('Board load error:', err);
+      loading.textContent = 'Could not load board.';
+    }
+  </script>
+</body>
+</html>

@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="description" content="ARTASAS - Alex's Profile">
+  <meta name="description" content="ARTASAS - Profile">
   <meta name="theme-color" content="#0a0a0f">
-  <title>Alex — ARTASAS</title>
+  <title>Profile — ARTASAS</title>
   <link rel="icon" type="image/png" href="FAVICON.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -342,7 +342,7 @@
   </div>
 
   <!-- Back Button -->
-  <a href="index.html" class="back-btn">
+  <a href="home_logada.html" class="back-btn">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M19 12H5M12 19l-7-7 7-7"/>
     </svg>
@@ -350,56 +350,51 @@
   </a>
 
   <div class="profile-container">
+    <div id="profile-loading" style="text-align:center;padding:100px 0;color:rgba(255,255,255,0.4);font-size:14px;">Loading profile...</div>
+
     <!-- Profile Header -->
-    <div class="profile-header">
+    <div class="profile-header" id="profile-header" style="display:none;">
       <div class="profile-avatar">
-        <img src="https://i.pravatar.cc/150?img=3" alt="Alex">
+        <img id="profile-avatar" src="" alt="">
       </div>
-      
+
       <div class="profile-info">
-        <h1 class="profile-name">Alex</h1>
-        <p class="profile-username">@alex</p>
+        <h1 class="profile-name" id="profile-name"></h1>
+        <p class="profile-username" id="profile-username"></p>
       </div>
-      
-      <p class="profile-bio">Digital artist and creative director. Exploring the intersection of technology and art.</p>
-      
+
+      <p class="profile-bio" id="profile-bio"></p>
+
+      <div id="profile-actions" style="display:none;gap:8px;margin-top:8px;">
+        <button id="edit-profile-btn" style="padding:10px 20px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:24px;color:#fff;font-family:inherit;font-size:13px;cursor:pointer;transition:all 0.2s ease;">Edit Profile</button>
+        <button id="follow-btn" style="display:none;padding:10px 20px;background:#fff;border:none;border-radius:24px;color:#000;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s ease;">Follow</button>
+      </div>
+
       <div class="profile-stats">
         <div class="stat">
           <span class="stat-value" id="images-count">0</span>
           <span class="stat-label">Images</span>
         </div>
         <div class="stat">
-          <span class="stat-value">4</span>
+          <span class="stat-value" id="boards-count">0</span>
           <span class="stat-label">Boards</span>
         </div>
         <div class="stat">
-          <span class="stat-value">2.4k</span>
+          <span class="stat-value" id="followers-count">0</span>
           <span class="stat-label">Followers</span>
         </div>
         <div class="stat">
-          <span class="stat-value">156</span>
+          <span class="stat-value" id="following-count">0</span>
           <span class="stat-label">Following</span>
         </div>
       </div>
+    </div>
 
-      <div class="social-links">
-        <a href="https://instagram.com/alex.artasas" target="_blank" class="social-link" title="Instagram">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="2" y="2" width="20" height="20" rx="5"/>
-            <circle cx="12" cy="12" r="4"/>
-            <circle cx="18" cy="6" r="1.5" fill="currentColor" stroke="none"/>
-          </svg>
-        </a>
-        <a href="https://x.com/alex_artasas" target="_blank" class="social-link" title="X">
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-          </svg>
-        </a>
-        <a href="https://linkedin.com/in/alexartasas" target="_blank" class="social-link" title="LinkedIn">
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-          </svg>
-        </a>
+    <!-- Create Board -->
+    <div id="create-board-section" style="display:none;text-align:center;margin-bottom:24px;">
+      <div style="display:inline-flex;gap:8px;">
+        <input type="text" id="new-board-input" placeholder="New board name" style="padding:10px 16px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-family:inherit;font-size:13px;outline:none;">
+        <button id="create-board-btn" style="padding:10px 18px;background:#fff;border:none;border-radius:10px;color:#000;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;">Create Board</button>
       </div>
     </div>
 
@@ -416,88 +411,214 @@
     </div>
   </div>
 
-  <script>
-    const images = [
-      '025ce04a-753c-4ac0-90fc-724966e35fa5.jpeg', '03cdbf2e8d84091b535378b6f3e28b7d.jpg',
-      '04d800fd-d969-41e8-adf8-64ebf6eb37e1.jpeg', '16fab7bb-6495-4d45-b25d-494055a4b33c.jpeg',
-      '2a3335cdc27bdc677f89863667c354dc.jpg', '34170add96db0159709f82efb83f7c39.jpg',
-      '37e7433f65e6064acf64c1993810b0cf.jpg', '3df2bb29-8609-42d8-ac77-e68dbef4b475.jpeg',
-      '57cbd7bdd778d87b337dc1120769decb.jpg', '6a8b2dc0-12fc-4ba3-aa31-aff359a761e8.jpeg',
-      '6e89fb39-3096-4e92-9f32-e6101f6ff825.jpeg', '6f53ae36-505b-440f-affe-0cc0cf9e8529.jpeg',
-      '71097654-382a-46ec-a3d4-2478ae087251.jpeg', '74d2981eb2e8400526272f86c55bc5d6.jpg',
-      '965d8b1dcc482979f0329b574cfd1108.jpg', '9d4b466353bc2ec699b8062a163db00c.jpg',
-      '9e297d9e1365fb44836fb54ea76fe408.jpg', 'a12121b22ebf2f3dce8adf5469439113.jpg',
-      'acf8fea5-220f-445e-8785-2ddac7bf4640.jpeg', 'adfa35385556cdca00bcfb6014cf8e77.jpg',
-      'art.jpeg', 'b4a0ccf623676d6f3e889f1d4757ed4c.jpg',
-      'b54c9dba-2d38-4b15-b7b0-a2557faddfd5.jpeg', 'b77a8587faa5df05f683aa53ffb395f5.jpg',
-      'c2edbde2-2f5b-49f5-9349-174472851ef5.jpeg', 'c9d73c80-5b88-4cb9-95c5-8e126dceb88b.jpeg',
-      'd85e35fb-751b-4344-8bf3-e4851c8ddd43.jpeg', 'e08063e1-19be-413f-9acc-10c3cced32f4.jpeg',
-      'e791c2d7cc6d7d583763189e0e8c4fc7.jpg', 'e79b0b372fc86ae378931ecd65d4a9f6.jpg',
-      'e969743e-8178-498c-85b6-365b2a2080a5.jpeg', 'ee8684761fe56f1891ac18dc859623c0.jpg',
-      'f0118967-4c43-4fd1-80a7-a4d855a14f2c.jpeg', 'f6c59438-1a4a-47f2-a093-fe18e1bad0da.jpeg',
-      'fe29348e36a36c2c99edb58821330c79.jpg', 'FJanx6YWYAo8KW9.jpeg',
-      'G__9DIUbcAAt_cy.jpeg', 'G__MaODbEAQ7Rn3.jpeg', 'G_6ATQ2XoAA95dV.jpeg',
-      'G_758bdWwAATy_9.jpeg', 'G_Cw8iBW0AAcDiV.jpeg', 'G_NWn8FaIAEO25I.jpeg',
-      'G_vet9yWcAARLKT.jpeg', 'G046ZVHWkAABcQ1.jpeg', 'G06JwjsWQAAw4Y5.jpeg',
-      'G2naqcabIAEp8jE.jpeg', 'G36PhxlWcAAxPr5.jpeg', 'G5BFNOzWYAAuMHi.jpeg',
-      'G8lehBTW8AA6C5u.jpeg', 'G93cWkQXcAAXPcr.jpeg', 'GLnfiyfWQAItm-O.jpeg',
-      'Gz7G_5rXEAAc7mt.jpeg', 'GzHnXerWoAAp5lI.jpeg', 'HAD4TeTbAAA7suu.jpeg',
-      'HAE4mByWMAAAzbd.jpeg', 'HAGeCV-XkAAVCu2.jpeg', 'HAOPIy1WAAA-j5X.jpeg', 'TRUST.png'
-    ];
+  <!-- Edit Profile Modal -->
+  <div id="edit-overlay" style="position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity 0.3s ease,visibility 0.3s ease;">
+    <div style="width:420px;max-width:90vw;background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:36px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+        <span style="font-size:18px;font-weight:600;color:#fff;">Edit Profile</span>
+        <button id="edit-close" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.06);border:none;border-radius:50%;color:rgba(255,255,255,0.6);cursor:pointer;font-size:18px;">&times;</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div>
+          <label style="display:block;font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:4px;">Display Name</label>
+          <input type="text" id="edit-name" style="width:100%;padding:10px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-family:inherit;font-size:14px;outline:none;">
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:4px;">Username</label>
+          <input type="text" id="edit-username" style="width:100%;padding:10px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-family:inherit;font-size:14px;outline:none;">
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:4px;">Bio</label>
+          <textarea id="edit-bio" rows="3" style="width:100%;padding:10px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-family:inherit;font-size:14px;outline:none;resize:vertical;"></textarea>
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:4px;">Avatar</label>
+          <input type="file" id="edit-avatar" accept="image/*" style="font-size:13px;color:rgba(255,255,255,0.5);">
+        </div>
+        <button id="edit-save" style="padding:12px;background:#fff;border:none;border-radius:10px;color:#000;font-family:inherit;font-size:14px;font-weight:500;cursor:pointer;margin-top:8px;">Save Changes</button>
+      </div>
+    </div>
+  </div>
 
-    // Update images count
-    document.getElementById('images-count').textContent = images.length;
+  <script type="module">
+    import { checkAuth } from './assets/js/auth-guard.js';
+    import { getUserProfile, updateUserProfile, getUserBoards, getUserArtworks, followUser, unfollowUser, isFollowing, createBoard } from './assets/js/db.js';
+    import { uploadAvatar } from './assets/js/storage.js';
+    import { auth, updateProfile } from './assets/js/firebase-config.js';
 
-    // Boards data
-    const boards = [
-      { name: 'Inspiration', images: images.slice(0, 12) },
-      { name: 'References', images: images.slice(12, 24) },
-      { name: 'Favorites', images: images.slice(24, 36) },
-      { name: 'Abstract', images: images.slice(36, 44) }
-    ];
+    const currentUser = await checkAuth();
+    if (!currentUser) { window.location.href = 'login.html'; return; }
 
-    // Create boards
+    // Determine which profile to show
+    const params = new URLSearchParams(window.location.search);
+    const profileUid = params.get('uid') || currentUser.uid;
+    const isOwnProfile = profileUid === currentUser.uid;
+
+    const profileLoading = document.getElementById('profile-loading');
+    const profileHeader = document.getElementById('profile-header');
+
+    // Load profile
+    let profile = await getUserProfile(profileUid);
+    if (!profile) {
+      profileLoading.textContent = 'Profile not found.';
+      return;
+    }
+
+    // Populate header
+    profileLoading.style.display = 'none';
+    profileHeader.style.display = '';
+
+    const avatarEl = document.getElementById('profile-avatar');
+    avatarEl.src = profile.avatarUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(profile.displayName || 'U') + '&background=333&color=fff&size=150';
+    document.getElementById('profile-name').textContent = profile.displayName || 'User';
+    document.getElementById('profile-username').textContent = profile.username ? '@' + profile.username : '@' + profileUid.slice(0, 8);
+    document.getElementById('profile-bio').textContent = profile.bio || '';
+    document.getElementById('images-count').textContent = profile.imageCount || 0;
+    document.getElementById('boards-count').textContent = profile.boardCount || 0;
+    document.getElementById('followers-count').textContent = profile.followerCount || 0;
+    document.getElementById('following-count').textContent = profile.followingCount || 0;
+    document.title = (profile.displayName || 'User') + ' — ARTASAS';
+
+    // Actions
+    const actionsDiv = document.getElementById('profile-actions');
+    const editBtn = document.getElementById('edit-profile-btn');
+    const followBtn = document.getElementById('follow-btn');
+
+    if (isOwnProfile) {
+      actionsDiv.style.display = 'flex';
+      editBtn.style.display = '';
+      followBtn.style.display = 'none';
+      document.getElementById('create-board-section').style.display = 'block';
+    } else {
+      actionsDiv.style.display = 'flex';
+      editBtn.style.display = 'none';
+      followBtn.style.display = '';
+      const following = await isFollowing(profileUid);
+      followBtn.textContent = following ? 'Following' : 'Follow';
+      followBtn.style.background = following ? 'rgba(255,255,255,0.06)' : '#fff';
+      followBtn.style.color = following ? '#fff' : '#000';
+      followBtn.style.border = following ? '1px solid rgba(255,255,255,0.15)' : 'none';
+
+      followBtn.addEventListener('click', async () => {
+        followBtn.disabled = true;
+        if (followBtn.textContent === 'Follow') {
+          await followUser(profileUid);
+          followBtn.textContent = 'Following';
+          followBtn.style.background = 'rgba(255,255,255,0.06)';
+          followBtn.style.color = '#fff';
+          followBtn.style.border = '1px solid rgba(255,255,255,0.15)';
+        } else {
+          await unfollowUser(profileUid);
+          followBtn.textContent = 'Follow';
+          followBtn.style.background = '#fff';
+          followBtn.style.color = '#000';
+          followBtn.style.border = 'none';
+        }
+        followBtn.disabled = false;
+      });
+    }
+
+    // Load boards
     const boardsGrid = document.getElementById('boards-grid');
-    
-    boards.forEach(board => {
-      const card = document.createElement('div');
-      card.className = 'board-card';
-      
-      const previewImages = board.images.slice(0, 4);
-      const previewHtml = previewImages.map(src => 
-        `<img src="${src}" alt="" loading="lazy">`
-      ).join('');
-      
-      // Fill empty slots if less than 4 images
-      const emptySlots = 4 - previewImages.length;
-      const emptySlotsHtml = Array(emptySlots).fill('<div class="empty-slot"></div>').join('');
-      
-      card.innerHTML = `
-        <div class="board-preview">
-          ${previewHtml}${emptySlotsHtml}
-        </div>
-        <div class="board-info">
-          <span class="board-name">${board.name}</span>
-          <span class="board-count">${board.images.length}</span>
-        </div>
-      `;
-      
-      boardsGrid.appendChild(card);
+    try {
+      const boards = await getUserBoards(profileUid);
+      boards.forEach(board => {
+        const card = document.createElement('div');
+        card.className = 'board-card';
+        const covers = (board.coverUrls || []).slice(0, 4);
+        card.innerHTML = `
+          <div class="board-preview">
+            ${[0,1,2,3].map(i => covers[i] ? `<img src="${covers[i]}" alt="" loading="lazy">` : '<div class="empty-slot"></div>').join('')}
+          </div>
+          <div class="board-info">
+            <span class="board-name">${board.name}</span>
+            <span class="board-count">${board.artworkCount || 0}</span>
+          </div>
+        `;
+        card.addEventListener('click', () => {
+          window.location.href = `board.html?id=${board.id}`;
+        });
+        boardsGrid.appendChild(card);
+      });
+      if (boards.length === 0) {
+        boardsGrid.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.3);font-size:13px;padding:24px;">No boards yet</div>';
+      }
+    } catch (err) {
+      console.error('Load boards error:', err);
+    }
+
+    // Create board
+    document.getElementById('create-board-btn')?.addEventListener('click', async () => {
+      const input = document.getElementById('new-board-input');
+      const name = input.value.trim();
+      if (!name) return;
+      try {
+        await createBoard(name);
+        input.value = '';
+        window.location.reload();
+      } catch (err) {
+        console.error('Create board error:', err);
+      }
     });
 
-    // Create grid items
-    const grid = document.getElementById('images-grid');
-    
-    images.forEach((src, index) => {
-      const item = document.createElement('div');
-      item.className = 'grid-item';
-      item.innerHTML = `<img src="${src}" alt="Artwork ${index + 1}" loading="lazy">`;
-      
-      item.addEventListener('click', () => {
-        window.location.href = `index.html?image=${encodeURIComponent(src)}`;
+    // Load images
+    const imagesGrid = document.getElementById('images-grid');
+    try {
+      const artworks = await getUserArtworks(profileUid);
+      document.getElementById('images-count').textContent = artworks.length;
+      artworks.forEach(art => {
+        const item = document.createElement('div');
+        item.className = 'grid-item';
+        item.innerHTML = `<img src="${art.imageUrl}" alt="${art.title || ''}" loading="lazy">`;
+        imagesGrid.appendChild(item);
       });
-      
-      grid.appendChild(item);
+      if (artworks.length === 0) {
+        imagesGrid.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.3);font-size:13px;padding:24px;">No images yet</div>';
+      }
+    } catch (err) {
+      console.error('Load artworks error:', err);
+    }
+
+    // Edit Profile Modal
+    const editOverlay = document.getElementById('edit-overlay');
+    editBtn.addEventListener('click', () => {
+      document.getElementById('edit-name').value = profile.displayName || '';
+      document.getElementById('edit-username').value = profile.username || '';
+      document.getElementById('edit-bio').value = profile.bio || '';
+      editOverlay.style.opacity = '1';
+      editOverlay.style.visibility = 'visible';
+    });
+    document.getElementById('edit-close').addEventListener('click', () => {
+      editOverlay.style.opacity = '0';
+      editOverlay.style.visibility = 'hidden';
+    });
+
+    document.getElementById('edit-save').addEventListener('click', async () => {
+      const saveBtn = document.getElementById('edit-save');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+
+      try {
+        const updates = {
+          displayName: document.getElementById('edit-name').value.trim(),
+          username: document.getElementById('edit-username').value.trim().toLowerCase().replace(/[^a-z0-9_]/g, ''),
+          bio: document.getElementById('edit-bio').value.trim()
+        };
+
+        const avatarFile = document.getElementById('edit-avatar').files[0];
+        if (avatarFile) {
+          updates.avatarUrl = await uploadAvatar(avatarFile);
+          await updateProfile(currentUser, { photoURL: updates.avatarUrl });
+        }
+
+        await updateProfile(currentUser, { displayName: updates.displayName });
+        await updateUserProfile(currentUser.uid, updates);
+        window.location.reload();
+      } catch (err) {
+        console.error('Save profile error:', err);
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Changes';
+      }
     });
   </script>
 </body>
