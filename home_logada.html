@@ -613,7 +613,6 @@
           <span class="badge"></span>
         </a>
         <a href="index.html" class="nav-link">Explore</a>
-        <a href="#" class="nav-link">Shop</a>
       </div>
     </div>
 
@@ -948,16 +947,23 @@
     }
 
     // Real upload to Firebase Storage + Firestore
+    const uploadError = document.createElement('div');
+    uploadError.style.cssText = 'display:none;background:rgba(255,80,80,0.1);border:1px solid rgba(255,80,80,0.2);border-radius:8px;padding:10px 14px;font-size:12px;color:#ff6b6b;margin-top:12px;word-break:break-word;';
+    uploadSubmitBtn.parentElement.appendChild(uploadError);
+
     uploadSubmitBtn.addEventListener('click', async () => {
       if (pendingFiles.length === 0) return;
       uploadSubmitBtn.disabled = true;
+      uploadError.style.display = 'none';
       const total = pendingFiles.length;
       let done = 0;
+      let lastError = null;
 
       for (const file of pendingFiles) {
         try {
           uploadSubmitBtn.textContent = `Uploading ${done + 1}/${total}...`;
           const { url } = await uploadImage(file);
+          uploadSubmitBtn.textContent = `Saving ${done + 1}/${total}...`;
           const artworkId = await createArtwork({
             imageUrl: url,
             title: file.name.replace(/\.[^.]+$/, ''),
@@ -974,10 +980,26 @@
           done++;
         } catch (err) {
           console.error('Upload failed:', err);
+          lastError = err;
         }
       }
 
-      closeUploadModal();
+      if (lastError && done === 0) {
+        uploadSubmitBtn.disabled = false;
+        uploadSubmitBtn.textContent = 'Upload Images';
+        uploadSubmitBtn.classList.add('ready');
+        const msg = lastError.code || lastError.message || String(lastError);
+        let hint = '';
+        if (msg.includes('storage/unauthorized') || msg.includes('storage/retry-limit') || msg.includes('does not exist')) {
+          hint = ' — Make sure Firebase Storage is created and rules allow uploads.';
+        } else if (msg.includes('permission') || msg.includes('PERMISSION_DENIED')) {
+          hint = ' — Check Firestore/Storage security rules.';
+        }
+        uploadError.textContent = `Upload failed: ${msg}${hint}`;
+        uploadError.style.display = 'block';
+      } else {
+        closeUploadModal();
+      }
     });
 
     // ── Board Modal ──
