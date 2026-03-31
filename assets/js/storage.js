@@ -8,9 +8,12 @@ export async function uploadImage(file) {
   const path = `artworks/${uid}/${timestamp}_${safeName}`;
   const storageRef = ref(storage, path);
 
-  await uploadBytes(storageRef, file, {
-    contentType: file.type
-  });
+  const timeoutMs = 15000;
+  const uploadPromise = uploadBytes(storageRef, file, { contentType: file.type });
+  const timeout = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('Upload timed out after 15s — Firebase Storage may not be activated. Go to Firebase Console → Storage and click "Get Started".')), timeoutMs)
+  );
+  await Promise.race([uploadPromise, timeout]);
 
   const url = await getDownloadURL(storageRef);
   return { url, path };

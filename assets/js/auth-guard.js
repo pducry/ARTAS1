@@ -1,4 +1,4 @@
-import { onAuth } from './auth.js';
+import { onAuth, ensureUserProfile } from './auth.js';
 
 // Redirect to login if user is not authenticated
 export function requireAuth() {
@@ -17,8 +17,9 @@ export function requireAuth() {
 // Check if user is logged in (non-blocking)
 export function checkAuth() {
   return new Promise((resolve) => {
-    const unsubscribe = onAuth((user) => {
+    const unsubscribe = onAuth(async (user) => {
       unsubscribe();
+      if (user) await ensureUserProfile(user);
       resolve(user);
     });
   });

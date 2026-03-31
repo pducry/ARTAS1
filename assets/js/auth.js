@@ -54,7 +54,7 @@ export async function handleGoogleRedirect() {
 }
 
 // Ensure user profile exists in Firestore
-async function ensureUserProfile(user) {
+export async function ensureUserProfile(user) {
   const profileDoc = await getDoc(doc(db, 'users', user.uid));
   if (!profileDoc.exists()) {
     await createUserProfile(user);
