@@ -54,6 +54,9 @@ service firebase.storage {
 
 ## Setup Checklist
 1. Enable Authentication > Email/Password + Google
-2. Create Firestore Database (test mode initially, then apply rules above)
-3. Create Storage bucket (apply rules above)
-4. Add authorized domain: pducry.github.io (Authentication > Settings > Authorized domains)
+2. Create Firestore Database (test mode initially, then apply rules above — prefer the committed `firestore.rules` file)
+3. Create Storage bucket (apply rules above — prefer the committed `storage.rules` file; it also enforces image MIME + size limits)
+4. Add authorized domains (Authentication > Settings > Authorized domains):
+   - `localhost`
+   - `pducry.github.io` (required for Google sign-in on https://pducry.github.io/ARTAS1/)
+5. Full publish steps: see `PUBLISH.md`
