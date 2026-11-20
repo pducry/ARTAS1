@@ -285,13 +285,14 @@
     }
 
     .feed-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 16px;
+      columns: 240px;
+      column-gap: 16px;
     }
 
     .feed-item {
       position: relative;
+      break-inside: avoid;
+      margin-bottom: 16px;
       border-radius: 16px;
       overflow: hidden;
       background: #111;
@@ -303,10 +304,10 @@
       transform: translateY(-4px);
     }
 
-    .feed-item img {
+    .feed-item > img {
       width: 100%;
+      height: auto;
       display: block;
-      object-fit: cover;
     }
 
     .feed-item-overlay {
@@ -588,8 +589,12 @@
       }
 
       .feed-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
+        columns: 150px;
+        column-gap: 8px;
+      }
+
+      .feed-item {
+        margin-bottom: 8px;
       }
 
       .feed-container {
@@ -1058,7 +1063,9 @@
         uploadSubmitBtn.classList.add('ready');
         const msg = lastError.code || lastError.message || String(lastError);
         let hint = '';
-        if (msg.includes('storage/unauthorized') || msg.includes('storage/retry-limit') || msg.includes('does not exist')) {
+        if (msg.includes('storage/quota-exceeded') || msg.includes('quota-exceeded')) {
+          hint = ' — Firebase Storage quota is exceeded. This project is on the Spark plan and needs the Blaze plan before uploads can succeed.';
+        } else if (msg.includes('storage/unauthorized') || msg.includes('storage/retry-limit') || msg.includes('does not exist')) {
           hint = ' — Make sure Firebase Storage is created and rules allow uploads.';
         } else if (msg.includes('permission') || msg.includes('PERMISSION_DENIED')) {
           hint = ' — Check Firestore/Storage security rules.';
