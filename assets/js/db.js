@@ -1,12 +1,10 @@
 import {
   db, auth,
-  doc, setDoc, getDoc, serverTimestamp
+  doc, setDoc, getDoc, updateDoc, deleteDoc, collection, addDoc,
+  query, where, orderBy, limit, getDocs, arrayUnion, arrayRemove, increment,
+  startAfter, serverTimestamp, getCountFromServer
 } from './firebase-config.js';
-
-import {
-  collection, addDoc, updateDoc, deleteDoc, query, where, orderBy, limit,
-  getDocs, arrayUnion, arrayRemove, increment, startAfter
-} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { safeImageUrl } from './sanitize.js';
 
 // ── Users ──
 
@@ -16,7 +14,15 @@ export async function getUserProfile(uid) {
 }
 
 export async function updateUserProfile(uid, data) {
-  await updateDoc(doc(db, 'users', uid), data);
+  const updates = { ...data };
+  delete updates.email;
+  delete updates.followerCount;
+  delete updates.followingCount;
+  if (Object.prototype.hasOwnProperty.call(updates, 'avatarUrl')) {
+    const avatar = safeImageUrl(updates.avatarUrl);
+    updates.avatarUrl = avatar.startsWith('https://') ? avatar : '';
+  }
+  await updateDoc(doc(db, 'users', uid), updates);
 }
 
 export async function getUserByUsername(username) {
@@ -30,11 +36,21 @@ export async function getUserByUsername(username) {
 // ── Artworks ──
 
 export async function createArtwork(data) {
+  const imageUrl = safeImageUrl(data?.imageUrl);
+  if (!imageUrl.startsWith('https://')) {
+    throw new Error('Artwork image URL must be an https URL.');
+  }
+  const avatarUrl = safeImageUrl(auth.currentUser.photoURL || '');
+  const avatar = avatarUrl.startsWith('https://') ? avatarUrl : '';
+  const title = typeof data.title === 'string' ? data.title.slice(0, 300) : '';
+  const tags = Array.isArray(data.tags) ? data.tags.filter((tag) => typeof tag === 'string').slice(0, 20) : [];
   const ref = await addDoc(collection(db, 'artworks'), {
-    ...data,
+    imageUrl,
+    title,
+    tags,
     uploadedBy: auth.currentUser.uid,
     uploaderName: auth.currentUser.displayName || '',
-    uploaderAvatar: auth.currentUser.photoURL || '',
+    uploaderAvatar: avatar,
     savedBy: [],
     saveCount: 0,
     createdAt: serverTimestamp()
@@ -140,8 +156,9 @@ export async function addArtworkToBoard(boardId, artworkId, imageUrl) {
     artworkIds: arrayUnion(artworkId),
     artworkCount: increment(1)
   };
-  if (coverUrls.length < 4) {
-    updates.coverUrls = arrayUnion(imageUrl);
+  const safeCover = safeImageUrl(imageUrl);
+  if (coverUrls.length < 4 && safeCover.startsWith('https://')) {
+    updates.coverUrls = arrayUnion(safeCover);
   }
   await updateDoc(boardRef, updates);
 }
@@ -182,26 +199,49 @@ export async function getBoardArtworks(boardId) {
 
 // ── Follow System ──
 
+function assertProfileUid(targetUid) {
+  if (typeof targetUid !== 'string' || !targetUid || targetUid.includes('/') || targetUid.includes('\\')) {
+    throw new Error('Invalid user id');
+  }
+}
+
 export async function followUser(targetUid) {
-  const uid = auth.currentUser.uid;
+  const uid = auth.currentUser?.uid;
+  if (!uid) throw new Error('Not signed in');
+  assertProfileUid(targetUid);
+  if (uid === targetUid) throw new Error('You cannot follow yourself');
+  // Counts are derived from this collection. The follower never writes the
+  // other person's user document.
   await setDoc(doc(db, 'follows', `${uid}_${targetUid}`), {
     followerId: uid,
     followingId: targetUid,
     createdAt: serverTimestamp()
   });
-  await updateDoc(doc(db, 'users', uid), { followingCount: increment(1) });
-  await updateDoc(doc(db, 'users', targetUid), { followerCount: increment(1) });
 }
 
 export async function unfollowUser(targetUid) {
-  const uid = auth.currentUser.uid;
+  const uid = auth.currentUser?.uid;
+  if (!uid) throw new Error('Not signed in');
+  assertProfileUid(targetUid);
+  if (uid === targetUid) throw new Error('You cannot unfollow yourself');
   await deleteDoc(doc(db, 'follows', `${uid}_${targetUid}`));
-  await updateDoc(doc(db, 'users', uid), { followingCount: increment(-1) });
-  await updateDoc(doc(db, 'users', targetUid), { followerCount: increment(-1) });
+}
+
+export async function getFollowerCount(uid) {
+  const q = query(collection(db, 'follows'), where('followingId', '==', uid));
+  const snap = await getCountFromServer(q);
+  return snap.data().count;
+}
+
+export async function getFollowingCount(uid) {
+  const q = query(collection(db, 'follows'), where('followerId', '==', uid));
+  const snap = await getCountFromServer(q);
+  return snap.data().count;
 }
 
 export async function isFollowing(targetUid) {
-  const uid = auth.currentUser.uid;
+  const uid = auth.currentUser?.uid;
+  if (!uid || !targetUid || uid === targetUid) return false;
   const snap = await getDoc(doc(db, 'follows', `${uid}_${targetUid}`));
   return snap.exists();
 }

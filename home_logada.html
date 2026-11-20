@@ -734,30 +734,18 @@
     import { logout } from './assets/js/auth.js';
     import { uploadImage } from './assets/js/storage.js';
     import { createArtwork, getArtworks, saveArtwork, unsaveArtwork, getUserBoards, createBoard, addArtworkToBoard } from './assets/js/db.js';
+    import { safeImageUrl, applyAvatar, appendCoverSlots, textEl } from './assets/js/sanitize.js';
 
     const user = await requireAuth();
 
     // ── User UI ──
-    function generateAvatar(name, size = 56) {
-      const initial = (name || '?').charAt(0).toUpperCase();
-      return `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" rx="${size/2}" fill="#333"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#ccc" font-size="${size * 0.45}" font-family="sans-serif" font-weight="500">${initial}</text></svg>`)}`;
-    }
-
     const avatarImg = document.getElementById('user-avatar-img');
     const dropdownName = document.getElementById('dropdown-name');
     const dropdownEmail = document.getElementById('dropdown-email');
 
-    if (user.photoURL) {
-      const testImg = new Image();
-      testImg.onload = () => { avatarImg.src = user.photoURL; };
-      testImg.onerror = () => { avatarImg.src = generateAvatar(user.displayName); };
-      testImg.src = user.photoURL;
-    } else {
-      avatarImg.src = generateAvatar(user.displayName);
-    }
-
+    applyAvatar(avatarImg, user.photoURL, user.displayName || 'User', 56);
     dropdownName.textContent = user.displayName || 'User';
-    dropdownEmail.textContent = user.email;
+    dropdownEmail.textContent = user.email || '';
 
     // Dropdown
     const avatarBtn = document.getElementById('user-avatar-btn');
@@ -793,62 +781,113 @@
       'HAE4mByWMAAAzbd.jpeg', 'HAGeCV-XkAAVCu2.jpeg', 'HAOPIy1WAAA-j5X.jpeg', 'TRUST.png'
     ];
 
+    function plusIcon() {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 24 24');
+      svg.setAttribute('fill', 'none');
+      svg.setAttribute('stroke', 'currentColor');
+      svg.setAttribute('stroke-width', '2');
+      svg.style.width = '14px';
+      svg.style.height = '14px';
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', 'M12 5v14M5 12h14');
+      svg.appendChild(path);
+      return svg;
+    }
+
     function createFeedItem(artwork) {
       const isFirestore = !!artwork.id;
-      const imgSrc = artwork.imageUrl || artwork;
-      const authorName = artwork.uploaderName || '';
-      const authorAvatar = artwork.uploaderAvatar || '';
-      const isSaved = isFirestore && artwork.savedBy && artwork.savedBy.includes(user.uid);
+      const rawSrc = isFirestore ? artwork.imageUrl : artwork;
+      const imgSrc = safeImageUrl(rawSrc);
+      const authorName = isFirestore ? String(artwork.uploaderName || '') : '';
+      const authorAvatar = isFirestore ? safeImageUrl(artwork.uploaderAvatar || '') : '';
+      const isSaved = isFirestore && Array.isArray(artwork.savedBy) && artwork.savedBy.includes(user.uid);
 
       const item = document.createElement('div');
       item.className = 'feed-item';
       if (isFirestore) item.dataset.artworkId = artwork.id;
 
-      item.innerHTML = `
-        <img src="${imgSrc}" alt="Image" loading="lazy">
-        <div class="feed-item-overlay"></div>
-        <div style="position:absolute;top:12px;right:12px;display:flex;gap:6px;opacity:0;transform:translateY(-4px);transition:all 0.2s ease;" class="feed-actions">
-          <button class="feed-save-btn" style="position:static;opacity:1;transform:none;${isSaved ? 'background:#111;' : ''}">${isSaved ? 'Saved' : 'Save'}</button>
-          ${isFirestore ? '<button class="feed-save-btn feed-board-btn" style="position:static;opacity:1;transform:none;background:rgba(0,0,0,0.6);padding:8px 10px;" title="Save to board"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M12 5v14M5 12h14"/></svg></button>' : ''}
-        </div>
-        ${authorName ? `
-        <div class="feed-item-info">
-          <div class="feed-author">
-            ${authorAvatar ? `<img src="${authorAvatar}" alt="${authorName}">` : ''}
-            <span>${authorName}</span>
-          </div>
-        </div>` : ''}
-      `;
+      const img = document.createElement('img');
+      img.alt = 'Image';
+      img.loading = 'lazy';
+      if (imgSrc) img.src = imgSrc;
+      item.appendChild(img);
 
-      // Show actions on hover
+      const overlay = document.createElement('div');
+      overlay.className = 'feed-item-overlay';
+      item.appendChild(overlay);
+
+      const actions = document.createElement('div');
+      actions.className = 'feed-actions';
+      actions.style.cssText = 'position:absolute;top:12px;right:12px;display:flex;gap:6px;opacity:0;transform:translateY(-4px);transition:all 0.2s ease;';
+
+      const saveBtn = document.createElement('button');
+      saveBtn.type = 'button';
+      saveBtn.className = 'feed-save-btn';
+      saveBtn.style.cssText = 'position:static;opacity:1;transform:none;';
+      if (isSaved) saveBtn.style.background = '#111';
+      saveBtn.textContent = isSaved ? 'Saved' : 'Save';
+      actions.appendChild(saveBtn);
+
+      let boardBtn = null;
+      if (isFirestore && imgSrc) {
+        boardBtn = document.createElement('button');
+        boardBtn.type = 'button';
+        boardBtn.className = 'feed-save-btn feed-board-btn';
+        boardBtn.style.cssText = 'position:static;opacity:1;transform:none;background:rgba(0,0,0,0.6);padding:8px 10px;';
+        boardBtn.title = 'Save to board';
+        boardBtn.appendChild(plusIcon());
+        actions.appendChild(boardBtn);
+      }
+      item.appendChild(actions);
+
+      if (authorName) {
+        const info = document.createElement('div');
+        info.className = 'feed-item-info';
+        const author = document.createElement('div');
+        author.className = 'feed-author';
+        if (authorAvatar.startsWith('https://')) {
+          const avatar = document.createElement('img');
+          avatar.src = authorAvatar;
+          avatar.alt = '';
+          author.appendChild(avatar);
+        }
+        author.appendChild(textEl('span', '', authorName));
+        info.appendChild(author);
+        item.appendChild(info);
+      }
+
       item.addEventListener('mouseenter', () => {
-        item.querySelector('.feed-actions').style.opacity = '1';
-        item.querySelector('.feed-actions').style.transform = 'translateY(0)';
+        actions.style.opacity = '1';
+        actions.style.transform = 'translateY(0)';
       });
       item.addEventListener('mouseleave', () => {
-        item.querySelector('.feed-actions').style.opacity = '0';
-        item.querySelector('.feed-actions').style.transform = 'translateY(-4px)';
+        actions.style.opacity = '0';
+        actions.style.transform = 'translateY(-4px)';
       });
 
-      // Save/unsave
-      const saveBtn = item.querySelector('.feed-save-btn');
       saveBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
         if (!isFirestore) return;
-        const artId = artwork.id;
-        if (saveBtn.textContent === 'Saved') {
-          await unsaveArtwork(artId);
-          saveBtn.textContent = 'Save';
-          saveBtn.style.background = '#e60023';
-        } else {
-          await saveArtwork(artId);
-          saveBtn.textContent = 'Saved';
-          saveBtn.style.background = '#111';
+        const wasSaved = saveBtn.textContent === 'Saved';
+        saveBtn.disabled = true;
+        try {
+          if (wasSaved) {
+            await unsaveArtwork(artwork.id);
+            saveBtn.textContent = 'Save';
+            saveBtn.style.background = '#e60023';
+          } else {
+            await saveArtwork(artwork.id);
+            saveBtn.textContent = 'Saved';
+            saveBtn.style.background = '#111';
+          }
+        } catch (err) {
+          console.error('Save failed:', err);
+        } finally {
+          saveBtn.disabled = false;
         }
       });
 
-      // Save to board
-      const boardBtn = item.querySelector('.feed-board-btn');
       if (boardBtn) {
         boardBtn.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -865,7 +904,9 @@
         feedLoading.style.display = 'none';
 
         if (artworks.length > 0) {
-          artworks.forEach(art => feedGrid.appendChild(createFeedItem(art)));
+          artworks.forEach(art => {
+            if (safeImageUrl(art.imageUrl)) feedGrid.appendChild(createFeedItem(art));
+          });
         }
 
         // Add local images as fallback/filler
@@ -911,10 +952,17 @@
       }
     });
 
+    function clearPreviews() {
+      [...uploadPreviewGrid.children].forEach((child) => {
+        if (child._objectUrl) URL.revokeObjectURL(child._objectUrl);
+      });
+      uploadPreviewGrid.replaceChildren();
+    }
+
     function closeUploadModal() {
       uploadOverlay.classList.remove('active');
       pendingFiles = [];
-      uploadPreviewGrid.innerHTML = '';
+      clearPreviews();
       uploadSubmitBtn.classList.remove('ready');
       uploadSubmitBtn.textContent = 'Upload Images';
       uploadSubmitBtn.disabled = false;
@@ -939,22 +987,29 @@
 
     function addFiles(files) {
       files.forEach(file => {
+        if (!file.type.startsWith('image/')) return;
         if (file.size > 20 * 1024 * 1024) return;
         pendingFiles.push(file);
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const item = document.createElement('div');
-          item.className = 'upload-preview-item';
-          item.innerHTML = `<img src="${e.target.result}" alt=""><button class="upload-preview-remove">&times;</button>`;
-          item.querySelector('.upload-preview-remove').addEventListener('click', () => {
-            const idx = [...uploadPreviewGrid.children].indexOf(item);
-            pendingFiles.splice(idx, 1);
-            item.remove();
-            uploadSubmitBtn.classList.toggle('ready', pendingFiles.length > 0);
-          });
-          uploadPreviewGrid.appendChild(item);
-        };
-        reader.readAsDataURL(file);
+        const item = document.createElement('div');
+        item.className = 'upload-preview-item';
+        const img = document.createElement('img');
+        const objectUrl = URL.createObjectURL(file);
+        item._objectUrl = objectUrl;
+        img.src = objectUrl;
+        img.alt = '';
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'upload-preview-remove';
+        removeBtn.textContent = '\u00d7';
+        removeBtn.addEventListener('click', () => {
+          URL.revokeObjectURL(objectUrl);
+          const idx = [...uploadPreviewGrid.children].indexOf(item);
+          if (idx >= 0) pendingFiles.splice(idx, 1);
+          item.remove();
+          uploadSubmitBtn.classList.toggle('ready', pendingFiles.length > 0);
+        });
+        item.append(img, removeBtn);
+        uploadPreviewGrid.appendChild(item);
       });
       uploadSubmitBtn.classList.toggle('ready', pendingFiles.length > 0);
     }
@@ -1033,31 +1088,40 @@
       currentImageUrl = null;
     }
 
+    function boardStatus(text, color) {
+      boardList.replaceChildren();
+      const line = document.createElement('div');
+      line.style.cssText = 'padding:16px;text-align:center;font-size:13px;';
+      line.style.color = color;
+      line.textContent = text;
+      boardList.appendChild(line);
+    }
+
     async function openBoardModal(artworkId, imageUrl) {
       currentArtworkId = artworkId;
       currentImageUrl = imageUrl;
       boardOverlay.classList.add('active');
-      boardList.innerHTML = '<div style="padding:16px;text-align:center;color:rgba(255,255,255,0.4);font-size:13px;">Loading boards...</div>';
+      boardStatus('Loading boards...', 'rgba(255,255,255,0.4)');
 
       try {
         const boards = await getUserBoards(user.uid);
-        boardList.innerHTML = '';
+        boardList.replaceChildren();
         if (boards.length === 0) {
-          boardList.innerHTML = '<div style="padding:16px;text-align:center;color:rgba(255,255,255,0.4);font-size:13px;">No boards yet. Create one below.</div>';
+          boardStatus('No boards yet. Create one below.', 'rgba(255,255,255,0.4)');
         } else {
           boards.forEach(board => {
             const el = document.createElement('div');
             el.className = 'board-option';
-            const covers = (board.coverUrls || []).slice(0, 4);
-            el.innerHTML = `
-              <div class="board-cover">
-                ${[0,1,2,3].map(i => covers[i] ? `<img src="${covers[i]}" alt="">` : '<div class="empty"></div>').join('')}
-              </div>
-              <div class="board-info">
-                <div class="name">${board.name}</div>
-                <div class="count">${board.artworkCount || 0} images</div>
-              </div>
-            `;
+            const cover = document.createElement('div');
+            cover.className = 'board-cover';
+            appendCoverSlots(cover, board.coverUrls, { emptyClass: 'empty' });
+            const info = document.createElement('div');
+            info.className = 'board-info';
+            info.append(
+              textEl('div', 'name', board.name || 'Untitled'),
+              textEl('div', 'count', `${Number(board.artworkCount) || 0} images`)
+            );
+            el.append(cover, info);
             el.addEventListener('click', async () => {
               try {
                 await addArtworkToBoard(board.id, currentArtworkId, currentImageUrl);
@@ -1070,7 +1134,7 @@
           });
         }
       } catch (err) {
-        boardList.innerHTML = '<div style="padding:16px;text-align:center;color:#ff6b6b;font-size:13px;">Could not load boards.</div>';
+        boardStatus('Could not load boards.', '#ff6b6b');
       }
     }
 

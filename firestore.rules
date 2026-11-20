@@ -1,27 +1,127 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function isHttpsUrl(url) {
+      return url is string
+        && url.size() > 8
+        && url.size() < 2048
+        && url.matches('^https://.+');
+    }
+
+    function savedByOf(data) {
+      return data.get('savedBy', []);
+    }
+
+    function saveCountOf(data) {
+      return data.get('saveCount', 0);
+    }
+
+    // A non-owner may only add or remove their own uid and move saveCount by 1.
+    // Every other artwork field, including uploadedBy, stays unchanged.
+    function isOwnSaveToggle() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['savedBy', 'saveCount'])
+        && (
+          (
+            savedByOf(request.resource.data).hasAll(savedByOf(resource.data))
+            && savedByOf(request.resource.data).size() == savedByOf(resource.data).size() + 1
+            && savedByOf(request.resource.data).hasAll([request.auth.uid])
+            && !savedByOf(resource.data).hasAny([request.auth.uid])
+            && saveCountOf(request.resource.data) == saveCountOf(resource.data) + 1
+          )
+          || (
+            savedByOf(resource.data).hasAll(savedByOf(request.resource.data))
+            && savedByOf(resource.data).size() == savedByOf(request.resource.data).size() + 1
+            && savedByOf(resource.data).hasAll([request.auth.uid])
+            && !savedByOf(request.resource.data).hasAny([request.auth.uid])
+            && saveCountOf(request.resource.data) == saveCountOf(resource.data) - 1
+          )
+        );
+    }
+
     match /users/{userId} {
       allow read: if true;
-      allow create: if request.auth != null && request.auth.uid == userId;
-      allow update: if request.auth != null && request.auth.uid == userId;
+
+      allow create: if isOwner(userId)
+        && !request.resource.data.keys().hasAny(['email']);
+
+      // The document after the write must not contain email. An owner removes a
+      // legacy email with deleteField(); until then, other updates are denied.
+      allow update: if isOwner(userId)
+        && !request.resource.data.keys().hasAny(['email']);
+
+      allow delete: if false;
+
+      match /private/{docId} {
+        allow read, write: if isOwner(userId);
+      }
     }
+
     match /artworks/{artworkId} {
       allow read: if true;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null;
-      allow delete: if request.auth != null && resource.data.uploadedBy == request.auth.uid;
+
+      allow create: if signedIn()
+        && request.resource.data.uploadedBy == request.auth.uid
+        && isHttpsUrl(request.resource.data.imageUrl)
+        && request.resource.data.get('saveCount', 0) == 0
+        && request.resource.data.get('savedBy', []).size() == 0
+        && request.resource.data.uploaderName is string
+        && (
+          request.resource.data.uploaderAvatar == ''
+          || isHttpsUrl(request.resource.data.uploaderAvatar)
+        );
+
+      allow update: if signedIn() && (
+        (
+          resource.data.uploadedBy == request.auth.uid
+          && request.resource.data.uploadedBy == resource.data.uploadedBy
+        )
+        || isOwnSaveToggle()
+      );
+
+      allow delete: if signedIn()
+        && resource.data.uploadedBy == request.auth.uid;
     }
+
     match /boards/{boardId} {
       allow read: if true;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null && resource.data.ownerId == request.auth.uid;
-      allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+
+      allow create: if signedIn()
+        && request.resource.data.ownerId == request.auth.uid;
+
+      allow update: if signedIn()
+        && resource.data.ownerId == request.auth.uid
+        && request.resource.data.ownerId == resource.data.ownerId;
+
+      allow delete: if signedIn()
+        && resource.data.ownerId == request.auth.uid;
     }
+
     match /follows/{followId} {
       allow read: if true;
-      allow create: if request.auth != null;
-      allow delete: if request.auth != null;
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['followerId', 'followingId', 'createdAt'])
+        && request.resource.data.followerId == request.auth.uid
+        && request.resource.data.followingId is string
+        && request.resource.data.followingId.size() > 0
+        && request.resource.data.followingId.size() <= 128
+        && request.resource.data.followingId != request.auth.uid
+        && followId == request.auth.uid + '_' + request.resource.data.followingId;
+
+      allow update: if false;
+
+      allow delete: if signedIn()
+        && resource.data.followerId == request.auth.uid
+        && followId == request.auth.uid + '_' + resource.data.followingId;
     }
   }
 }
