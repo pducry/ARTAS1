@@ -1,17 +1,28 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function isAllowedImage(maxBytes) {
+      return request.resource != null
+        && request.resource.size <= maxBytes
+        && request.resource.contentType.matches('^image/(jpeg|png|gif|webp)$');
+    }
+
+    // Only the signed-in owner can write under their own prefix.
+    // Delete does not send request.resource, so it is a separate match.
     match /artworks/{userId}/{allPaths=**} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId
-                   && request.resource.size < 20 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
+      allow create, update: if isOwner(userId) && isAllowedImage(20 * 1024 * 1024);
+      allow delete: if isOwner(userId);
     }
+
     match /avatars/{userId}/{allPaths=**} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId
-                   && request.resource.size < 5 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
+      allow create, update: if isOwner(userId) && isAllowedImage(5 * 1024 * 1024);
+      allow delete: if isOwner(userId);
     }
   }
 }

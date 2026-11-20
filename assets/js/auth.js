@@ -2,8 +2,10 @@ import {
   auth, db, googleProvider,
   onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword,
   signInWithPopup, signInWithRedirect, getRedirectResult, signOut, updateProfile,
-  doc, setDoc, getDoc, serverTimestamp
+  doc, setDoc, getDoc, updateDoc, serverTimestamp, deleteField
 } from './firebase-config.js';
+
+const PRIVATE_EMAIL_FLAG = 'artasPrivateEmail';
 
 // Sign in with email and password
 export async function loginWithEmail(email, password) {
@@ -53,11 +55,25 @@ export async function handleGoogleRedirect() {
   return null;
 }
 
-// Ensure user profile exists in Firestore
+// Ensure user profile exists in Firestore and that email is not on the public doc.
 export async function ensureUserProfile(user) {
-  const profileDoc = await getDoc(doc(db, 'users', user.uid));
+  const profileRef = doc(db, 'users', user.uid);
+  const profileDoc = await getDoc(profileRef);
   if (!profileDoc.exists()) {
     await createUserProfile(user);
+    return;
+  }
+
+  const data = profileDoc.data() || {};
+  const hasPublicEmail = Object.prototype.hasOwnProperty.call(data, 'email');
+  if (hasPublicEmail) {
+    await storePrivateEmail(user.uid, typeof data.email === 'string' ? data.email : user.email);
+    await updateDoc(profileRef, { email: deleteField() });
+    return;
+  }
+
+  if (user.email && !privateEmailSaved(user.uid)) {
+    await storePrivateEmail(user.uid, user.email);
   }
 }
 
@@ -66,20 +82,47 @@ export async function logout() {
   return signOut(auth);
 }
 
-// Create user profile in Firestore
+// Public profile fields only. Email lives on users/{uid}/private/account.
 async function createUserProfile(user) {
   await setDoc(doc(db, 'users', user.uid), {
     displayName: user.displayName || '',
-    email: user.email,
     avatarUrl: user.photoURL || '',
     username: '',
     bio: '',
     imageCount: 0,
     boardCount: 0,
-    followerCount: 0,
-    followingCount: 0,
     createdAt: serverTimestamp()
   });
+  await storePrivateEmail(user.uid, user.email);
+}
+
+function privateEmailSaved(uid) {
+  try {
+    return localStorage.getItem(`${PRIVATE_EMAIL_FLAG}:${uid}`) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function markPrivateEmailSaved(uid) {
+  try {
+    localStorage.setItem(`${PRIVATE_EMAIL_FLAG}:${uid}`, '1');
+  } catch {
+    // Ignore storage failures; the private doc write is the source of truth.
+  }
+}
+
+async function storePrivateEmail(uid, email) {
+  if (typeof email !== 'string' || !email) return;
+  try {
+    await setDoc(doc(db, 'users', uid, 'private', 'account'), {
+      email,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+    markPrivateEmailSaved(uid);
+  } catch (err) {
+    console.warn('Private profile email was not saved. Deploy Firestore rules with: firebase deploy --only firestore:rules', err);
+  }
 }
 
 // Listen to auth state changes
