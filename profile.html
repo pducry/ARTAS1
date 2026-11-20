@@ -442,10 +442,12 @@
 
   <script type="module">
     import { checkAuth } from './assets/js/auth-guard.js';
-    import { getUserProfile, updateUserProfile, getUserBoards, getUserArtworks, followUser, unfollowUser, isFollowing, createBoard } from './assets/js/db.js';
+    import { getUserProfile, updateUserProfile, getUserBoards, getUserArtworks, followUser, unfollowUser, isFollowing, createBoard, getFollowerCount, getFollowingCount } from './assets/js/db.js';
     import { uploadAvatar } from './assets/js/storage.js';
     import { auth, updateProfile } from './assets/js/firebase-config.js';
+    import { applyAvatar, appendSafeImage, appendCoverSlots, textEl, safeImageUrl } from './assets/js/sanitize.js';
 
+    (async () => {
     const currentUser = await checkAuth();
     if (!currentUser) { window.location.href = 'login.html'; return; }
 
@@ -453,6 +455,10 @@
     const params = new URLSearchParams(window.location.search);
     const profileUid = params.get('uid') || currentUser.uid;
     const isOwnProfile = profileUid === currentUser.uid;
+    if (profileUid.includes('/') || profileUid.includes('\\')) {
+      profileLoading.textContent = 'Profile not found.';
+      return;
+    }
 
     const profileLoading = document.getElementById('profile-loading');
     const profileHeader = document.getElementById('profile-header');
@@ -469,15 +475,37 @@
     profileHeader.style.display = '';
 
     const avatarEl = document.getElementById('profile-avatar');
-    avatarEl.src = profile.avatarUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(profile.displayName || 'U') + '&background=333&color=fff&size=150';
+    applyAvatar(avatarEl, profile.avatarUrl, profile.displayName || 'User', 150);
     document.getElementById('profile-name').textContent = profile.displayName || 'User';
     document.getElementById('profile-username').textContent = profile.username ? '@' + profile.username : '@' + profileUid.slice(0, 8);
     document.getElementById('profile-bio').textContent = profile.bio || '';
     document.getElementById('images-count').textContent = profile.imageCount || 0;
     document.getElementById('boards-count').textContent = profile.boardCount || 0;
-    document.getElementById('followers-count').textContent = profile.followerCount || 0;
-    document.getElementById('following-count').textContent = profile.followingCount || 0;
     document.title = (profile.displayName || 'User') + ' — ARTASAS';
+
+    async function refreshFollowCounts() {
+      const [followers, following] = await Promise.all([
+        getFollowerCount(profileUid),
+        getFollowingCount(profileUid)
+      ]);
+      document.getElementById('followers-count').textContent = String(followers);
+      document.getElementById('following-count').textContent = String(following);
+    }
+
+    try {
+      await refreshFollowCounts();
+    } catch (err) {
+      console.error('Follow counts error:', err);
+      document.getElementById('followers-count').textContent = '0';
+      document.getElementById('following-count').textContent = '0';
+    }
+
+    function setFollowButton(following) {
+      followBtn.textContent = following ? 'Following' : 'Follow';
+      followBtn.style.background = following ? 'rgba(255,255,255,0.06)' : '#fff';
+      followBtn.style.color = following ? '#fff' : '#000';
+      followBtn.style.border = following ? '1px solid rgba(255,255,255,0.15)' : 'none';
+    }
 
     // Actions
     const actionsDiv = document.getElementById('profile-actions');
@@ -494,27 +522,25 @@
       editBtn.style.display = 'none';
       followBtn.style.display = '';
       const following = await isFollowing(profileUid);
-      followBtn.textContent = following ? 'Following' : 'Follow';
-      followBtn.style.background = following ? 'rgba(255,255,255,0.06)' : '#fff';
-      followBtn.style.color = following ? '#fff' : '#000';
-      followBtn.style.border = following ? '1px solid rgba(255,255,255,0.15)' : 'none';
+      setFollowButton(following);
 
       followBtn.addEventListener('click', async () => {
         followBtn.disabled = true;
-        if (followBtn.textContent === 'Follow') {
-          await followUser(profileUid);
-          followBtn.textContent = 'Following';
-          followBtn.style.background = 'rgba(255,255,255,0.06)';
-          followBtn.style.color = '#fff';
-          followBtn.style.border = '1px solid rgba(255,255,255,0.15)';
-        } else {
-          await unfollowUser(profileUid);
-          followBtn.textContent = 'Follow';
-          followBtn.style.background = '#fff';
-          followBtn.style.color = '#000';
-          followBtn.style.border = 'none';
+        const wasFollowing = followBtn.textContent === 'Following';
+        try {
+          if (wasFollowing) {
+            await unfollowUser(profileUid);
+            setFollowButton(false);
+          } else {
+            await followUser(profileUid);
+            setFollowButton(true);
+          }
+          await refreshFollowCounts();
+        } catch (err) {
+          console.error('Follow update failed:', err);
+        } finally {
+          followBtn.disabled = false;
         }
-        followBtn.disabled = false;
       });
     }
 
@@ -522,26 +548,29 @@
     const boardsGrid = document.getElementById('boards-grid');
     try {
       const boards = await getUserBoards(profileUid);
+      document.getElementById('boards-count').textContent = String(boards.length);
       boards.forEach(board => {
         const card = document.createElement('div');
         card.className = 'board-card';
-        const covers = (board.coverUrls || []).slice(0, 4);
-        card.innerHTML = `
-          <div class="board-preview">
-            ${[0,1,2,3].map(i => covers[i] ? `<img src="${covers[i]}" alt="" loading="lazy">` : '<div class="empty-slot"></div>').join('')}
-          </div>
-          <div class="board-info">
-            <span class="board-name">${board.name}</span>
-            <span class="board-count">${board.artworkCount || 0}</span>
-          </div>
-        `;
+        const preview = document.createElement('div');
+        preview.className = 'board-preview';
+        appendCoverSlots(preview, board.coverUrls, { emptyClass: 'empty-slot' });
+        const info = document.createElement('div');
+        info.className = 'board-info';
+        info.append(
+          textEl('span', 'board-name', board.name || 'Untitled'),
+          textEl('span', 'board-count', String(Number(board.artworkCount) || 0))
+        );
+        card.append(preview, info);
         card.addEventListener('click', () => {
-          window.location.href = `board.html?id=${board.id}`;
+          window.location.href = `board.html?id=${encodeURIComponent(board.id)}`;
         });
         boardsGrid.appendChild(card);
       });
       if (boards.length === 0) {
-        boardsGrid.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.3);font-size:13px;padding:24px;">No boards yet</div>';
+        const empty = textEl('div', '', 'No boards yet');
+        empty.style.cssText = 'text-align:center;color:rgba(255,255,255,0.3);font-size:13px;padding:24px;';
+        boardsGrid.appendChild(empty);
       }
     } catch (err) {
       console.error('Load boards error:', err);
@@ -565,15 +594,18 @@
     const imagesGrid = document.getElementById('images-grid');
     try {
       const artworks = await getUserArtworks(profileUid);
-      document.getElementById('images-count').textContent = artworks.length;
+      document.getElementById('images-count').textContent = String(artworks.length);
       artworks.forEach(art => {
+        if (!safeImageUrl(art.imageUrl)) return;
         const item = document.createElement('div');
         item.className = 'grid-item';
-        item.innerHTML = `<img src="${art.imageUrl}" alt="${art.title || ''}" loading="lazy">`;
+        appendSafeImage(item, art.imageUrl, { alt: art.title || '' });
         imagesGrid.appendChild(item);
       });
       if (artworks.length === 0) {
-        imagesGrid.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.3);font-size:13px;padding:24px;">No images yet</div>';
+        const empty = textEl('div', '', 'No images yet');
+        empty.style.cssText = 'text-align:center;color:rgba(255,255,255,0.3);font-size:13px;padding:24px;';
+        imagesGrid.appendChild(empty);
       }
     } catch (err) {
       console.error('Load artworks error:', err);
@@ -620,6 +652,7 @@
         saveBtn.textContent = 'Save Changes';
       }
     });
+    })();
   </script>
 </body>
 </html>

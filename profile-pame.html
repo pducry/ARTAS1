@@ -184,7 +184,9 @@
     </div>
   </div>
 
-  <script>
+  <script type="module">
+    import { renderLocalBoardsAndImages } from './assets/js/sanitize.js';
+
     const images = [
       '2a3335cdc27bdc677f89863667c354dc.jpg', '34170add96db0159709f82efb83f7c39.jpg',
       '37e7433f65e6064acf64c1993810b0cf.jpg', '3df2bb29-8609-42d8-ac77-e68dbef4b475.jpeg',
@@ -204,8 +206,6 @@
       'fe29348e36a36c2c99edb58821330c79.jpg', 'FJanx6YWYAo8KW9.jpeg'
     ];
 
-    document.getElementById('images-count').textContent = images.length;
-
     const boards = [
       { name: 'Projects', images: images.slice(0, 10) },
       { name: 'Experiments', images: images.slice(10, 18) },
@@ -213,33 +213,10 @@
       { name: 'Concepts', images: images.slice(26, 32) }
     ];
 
-    const boardsGrid = document.getElementById('boards-grid');
-    boards.forEach(board => {
-      const card = document.createElement('div');
-      card.className = 'board-card';
-      const previewImages = board.images.slice(0, 4);
-      const previewHtml = previewImages.map(src => `<img src="${src}" alt="" loading="lazy">`).join('');
-      const emptySlots = 4 - previewImages.length;
-      const emptySlotsHtml = Array(emptySlots).fill('<div class="empty-slot"></div>').join('');
-      card.innerHTML = `
-        <div class="board-preview">${previewHtml}${emptySlotsHtml}</div>
-        <div class="board-info">
-          <span class="board-name">${board.name}</span>
-          <span class="board-count">${board.images.length}</span>
-        </div>
-      `;
-      boardsGrid.appendChild(card);
-    });
-
-    const grid = document.getElementById('images-grid');
-    images.forEach((src, index) => {
-      const item = document.createElement('div');
-      item.className = 'grid-item';
-      item.innerHTML = `<img src="${src}" alt="Artwork ${index + 1}" loading="lazy">`;
-      item.addEventListener('click', () => {
-        window.location.href = `index.html?image=${encodeURIComponent(src)}`;
-      });
-      grid.appendChild(item);
+    renderLocalBoardsAndImages({
+      images,
+      boards,
+      imageHref: (src) => `index.html?image=${encodeURIComponent(src)}`
     });
   </script>
 </body>

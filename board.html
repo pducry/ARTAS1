@@ -123,8 +123,10 @@
 
   <script type="module">
     import { checkAuth } from './assets/js/auth-guard.js';
-    import { getBoard, getBoardArtworks, deleteBoard, removeArtworkFromBoard } from './assets/js/db.js';
+    import { getBoard, getBoardArtworks, deleteBoard } from './assets/js/db.js';
+    import { appendSafeImage, textEl, safeImageUrl } from './assets/js/sanitize.js';
 
+    (async () => {
     const user = await checkAuth();
     if (!user) { window.location.href = 'login.html'; return; }
 
@@ -164,19 +166,26 @@
       // Load artworks
       const artworks = await getBoardArtworks(boardId);
       if (artworks.length === 0) {
-        grid.innerHTML = '<div class="empty-state">This board is empty.</div>';
+        grid.appendChild(textEl('div', 'empty-state', 'This board is empty.'));
       } else {
+        let shown = 0;
         artworks.forEach(art => {
+          if (!safeImageUrl(art.imageUrl)) return;
           const item = document.createElement('div');
           item.className = 'grid-item';
-          item.innerHTML = `<img src="${art.imageUrl}" alt="${art.title || ''}" loading="lazy">`;
+          appendSafeImage(item, art.imageUrl, { alt: art.title || '' });
           grid.appendChild(item);
+          shown += 1;
         });
+        if (shown === 0) {
+          grid.appendChild(textEl('div', 'empty-state', 'This board is empty.'));
+        }
       }
     } catch (err) {
       console.error('Board load error:', err);
       loading.textContent = 'Could not load board.';
     }
+    })();
   </script>
 </body>
 </html>
