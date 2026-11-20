@@ -1,7 +1,11 @@
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, updateProfile } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, updateProfile } from 'https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js';
+import {
+  getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, collection, addDoc,
+  query, where, orderBy, limit, getDocs, arrayUnion, arrayRemove, increment,
+  startAfter, serverTimestamp, deleteField, getCountFromServer
+} from 'https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/13.4.0/firebase-storage.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBf3QmZ5zK4yczX04rlKWChoGFlxp7tKqE",
@@ -23,7 +27,9 @@ export {
   auth, db, storage, googleProvider,
   onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword,
   signInWithPopup, signInWithRedirect, getRedirectResult, signOut, updateProfile,
-  doc, setDoc, getDoc, serverTimestamp,
-  ref, uploadBytes, getDownloadURL,
-  GoogleAuthProvider
+  GoogleAuthProvider,
+  doc, setDoc, getDoc, updateDoc, deleteDoc, collection, addDoc,
+  query, where, orderBy, limit, getDocs, arrayUnion, arrayRemove, increment,
+  startAfter, serverTimestamp, deleteField, getCountFromServer,
+  ref, uploadBytes, getDownloadURL
 };

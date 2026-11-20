@@ -1,12 +1,9 @@
 import {
   db, auth,
-  doc, setDoc, getDoc, serverTimestamp
+  doc, setDoc, getDoc, updateDoc, deleteDoc, collection, addDoc,
+  query, where, orderBy, limit, getDocs, arrayUnion, arrayRemove, increment,
+  startAfter, serverTimestamp
 } from './firebase-config.js';
-
-import {
-  collection, addDoc, updateDoc, deleteDoc, query, where, orderBy, limit,
-  getDocs, arrayUnion, arrayRemove, increment, startAfter
-} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 // ── Users ──
 
